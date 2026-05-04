@@ -305,49 +305,141 @@
 
     // Player now has vy for full 2D movement
     const player = { x: 0, y: 150, radius: 18, vx: 0, vy: 0, friction: 0.92 };
-    let obstacles = [], powerups = [], backgroundBubbles = [], floatingTexts = [];
+    let obstacles = [], powerups = [], backgroundBubbles = [], floatingTexts = [], bottlecaps = [];
+    let bottlecapSpawnAccum = 0;
+    let bottlecapIntroShown = false; // one-time "NEW THREAT" banner per run
 
     // --- CHANGE 1: Key state tracking for held-key movement (replaces impulse boosts) ---
     const keys = {};
     let isDragging = false; // tracks whether a finger is actively dragging the bubble
 
-    // Audio Logic (unchanged)
+    // ===== MUSIC ENGINE =====
     let audioCtx;
-    let nextNoteTime = 0;
-    let currentNoteIndex = 0;
-    const melody = [261.63, 329.63, 392.00, 523.25];
+
+    // Note frequencies
+    const N = {
+        C3:130.81, E3:164.81, F3:174.61, G3:196.00, A3:220.00,
+        C4:261.63, D4:293.66, E4:329.63, G4:392.00, A4:440.00,
+        C5:523.25, D5:587.33, E5:659.25, G5:783.99, A5:880.00,
+        _:0
+    };
+
+    // 16-step sequences — upbeat C-major chiptune hook
+    const SEQ_LEAD = [
+        N.G5, N._,  N.E5, N.G5,
+        N.C5, N._,  N.E5, N._,
+        N.G5, N.E5, N.A5, N._,
+        N.G5, N._,  N.D5, N.E5
+    ];
+    const SEQ_BASS = [
+        N.C3, N._,  N.G3, N._,
+        N.C3, N._,  N.E3, N.G3,
+        N.F3, N._,  N.G3, N._,
+        N.C3, N._,  N.G3, N._
+    ];
+    // Rush mode: same shapes pitched up a perfect 4th, more aggressive feel
+    const SEQ_LEAD_RUSH = SEQ_LEAD.map(f => f > 0 ? f * (4/3) : 0);
+    const SEQ_BASS_RUSH = SEQ_BASS.map(f => f > 0 ? f * (4/3) : 0);
+
+    const KICK_STEPS  = new Set([0, 4, 8, 12]);
+    const SNARE_STEPS = new Set([4, 12]);
+    const HAT_STEPS   = new Set([0, 2, 4, 6, 8, 10, 12, 14]);
+
+    let musicStep = 0;
+    let musicNextTime = 0;
+    const SCHED_AHEAD = 0.14; // seconds to schedule ahead
 
     function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
-    
-    function playSound(freq, type = 'sine', duration = 0.1, vol = 0.1) {
-        if (!soundEnabled || !audioCtx) return;
+
+    function scheduleOsc(freq, type, time, dur, vol) {
+        if (!audioCtx) return;
         try {
             const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+            const g   = audioCtx.createGain();
             osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
-        } catch (e) {}
+            osc.frequency.setValueAtTime(freq, time);
+            g.gain.setValueAtTime(vol, time);
+            g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(time); osc.stop(time + dur + 0.01);
+        } catch(e) {}
+    }
+
+    function scheduleKick(time) {
+        if (!audioCtx) return;
+        try {
+            const osc = audioCtx.createOscillator();
+            const g   = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(110, time);
+            osc.frequency.exponentialRampToValueAtTime(38, time + 0.1);
+            g.gain.setValueAtTime(0.45, time);
+            g.gain.exponentialRampToValueAtTime(0.0001, time + 0.18);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(time); osc.stop(time + 0.22);
+        } catch(e) {}
+    }
+
+    function scheduleHat(time, vol) {
+        if (!audioCtx) return;
+        try {
+            const buf  = audioCtx.createBuffer(1, Math.ceil(audioCtx.sampleRate * 0.04), audioCtx.sampleRate);
+            const data = buf.getChannelData(0);
+            for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+            const src = audioCtx.createBufferSource();
+            const hpf = audioCtx.createBiquadFilter();
+            const g   = audioCtx.createGain();
+            hpf.type = 'highpass'; hpf.frequency.value = 7500;
+            src.buffer = buf;
+            src.connect(hpf); hpf.connect(g); g.connect(audioCtx.destination);
+            g.gain.setValueAtTime(vol, time);
+            g.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
+            src.start(time);
+        } catch(e) {}
+    }
+
+    function scheduleSnare(time) {
+        scheduleHat(time, 0.18);
+        scheduleOsc(185, 'square', time, 0.07, 0.09);
     }
 
     function playJingle() {
         if (!soundEnabled || !audioCtx || !gameActive || isLevelingUp) return;
-        const tempo = Math.max(0.12, 0.45 - (level * 0.04));
-        if (audioCtx.currentTime >= nextNoteTime) {
-            const freq = melody[currentNoteIndex];
-            playSound(freq, 'sine', tempo * 0.7, 0.025);
-            currentNoteIndex = (currentNoteIndex + 1) % melody.length;
-            nextNoteTime = audioCtx.currentTime + tempo;
+        const isRush  = activePowerup === 'rush';
+        const bpm     = isRush ? 172 : 148;
+        const stepDur = 60 / bpm / 4; // sixteenth-note duration in seconds
+        const lead    = isRush ? SEQ_LEAD_RUSH : SEQ_LEAD;
+        const bass    = isRush ? SEQ_BASS_RUSH : SEQ_BASS;
+
+        while (musicNextTime < audioCtx.currentTime + SCHED_AHEAD) {
+            const s = musicStep % 16;
+            const t = musicNextTime;
+
+            // Lead melody
+            if (lead[s] > 0) {
+                scheduleOsc(lead[s], isRush ? 'sawtooth' : 'square', t, stepDur * 0.65, isRush ? 0.075 : 0.06);
+                if (isRush) scheduleOsc(lead[s] * 1.5, 'square', t, stepDur * 0.45, 0.025); // 5th harmony
+            }
+            // Bass (every other step so it pulses, not buzzes)
+            if (s % 2 === 0 && bass[s] > 0) {
+                scheduleOsc(bass[s], 'triangle', t, stepDur * 1.7, 0.1);
+            }
+            // Percussion
+            if (KICK_STEPS.has(s))  scheduleKick(t);
+            if (SNARE_STEPS.has(s)) scheduleSnare(t);
+            else if (HAT_STEPS.has(s)) scheduleHat(t, 0.05);
+
+            musicStep++;
+            musicNextTime += stepDur;
         }
+    }
+
+    // One-shot sound effects (unchanged API so rest of game still works)
+    function playSound(freq, type = 'sine', duration = 0.1, vol = 0.1) {
+        if (!soundEnabled || !audioCtx) return;
+        scheduleOsc(freq, type, audioCtx.currentTime, duration, vol);
     }
 
     function toggleSound() {
@@ -356,7 +448,8 @@
         document.getElementById('sound-toggle').innerText = soundEnabled ? '🔊' : '🔇';
         if (soundEnabled) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            nextNoteTime = audioCtx.currentTime;
+            musicNextTime = audioCtx.currentTime;
+            musicStep = 0;
         }
     }
 
@@ -570,8 +663,10 @@
         gameActive = true; isLevelingUp = false; isGameOver = false;
         score = 0; level = 1; iceHits = 0;
         freezeFrames = 0; invulFrames = 0; frameCount = 0;
-        obstacles = []; powerups = []; floatingTexts = [];
-        activePowerup = null; powerupTime = 0;
+        obstacles = []; powerups = []; floatingTexts = []; bottlecaps = [];
+        bottlecapSpawnAccum = 0;
+        bottlecapIntroShown = false;
+        activePowerup = null; powerupTime = 0; scoreToNextLevel = 50;
         // --- CHANGE 2: reset timing accumulators ---
         spawnAccum = 0;
         rushWarnLastTick = 0;
@@ -589,7 +684,7 @@
         powerupUI.style.display = 'none';
         scoreElement.innerText = "0";
         levelElement.innerText = "1";
-        if (soundEnabled && audioCtx) nextNoteTime = audioCtx.currentTime;
+        if (soundEnabled && audioCtx) { musicNextTime = audioCtx.currentTime; musicStep = 0; }
     }
 
     function resetGame() { startGame(); }
@@ -601,12 +696,12 @@
         levelElement.innerText = level;
         document.getElementById('level-screen').style.display = 'none';
         gameActive = true;
-        // --- CHANGE 2: reset timing so the new level starts cleanly ---
+        bottlecapSpawnAccum = 0;
         lastTimestamp = null;
         spawnAccum = 0;
         rushWarnLastTick = 0;
         playSound(523, 'sine', 0.2, 0.15);
-        if (soundEnabled && audioCtx) nextNoteTime = audioCtx.currentTime;
+        if (soundEnabled && audioCtx) { musicNextTime = audioCtx.currentTime; musicStep = 0; }
     }
 
     // --- CHANGE 2: update now receives dt (normalized to 60fps = 1.0) ---
@@ -731,6 +826,52 @@
                 obstacles.splice(i, 1);
             } else if (o.y < -100) obstacles.splice(i, 1);
         }
+
+        // ===== BOTTLECAP SYSTEM (level 7+) =====
+        if (level >= 7) {
+            // How many bottlecaps can be on screen: 1 at L7, +1 every 2 levels, max 4
+            const maxCaps = Math.min(4, Math.floor((level - 7) / 2) + 1);
+            // Spawn interval shrinks with level
+            const capInterval = Math.max(220, 600 - (level - 7) * 55);
+            bottlecapSpawnAccum += dt;
+            if (bottlecapSpawnAccum >= capInterval && bottlecaps.length < maxCaps) {
+                bottlecapSpawnAccum = 0;
+                const fromLeft = Math.random() < 0.5;
+                const r = 22;
+                const spd = (2.2 + Math.random() * 1.5) * Math.pow(1.08, level - 7);
+                bottlecaps.push({
+                    x: fromLeft ? -r - 10 : canvas.width + r + 10,
+                    y: 90 + Math.random() * (canvas.height - 180),
+                    r, vx: fromLeft ? spd : -spd,
+                    rotation: 0,
+                    bubbleLife: 150,  // word bubble fades after ~2.5s
+                    fromLeft
+                });
+                // One-time intro banner the very first bottlecap the player ever sees
+                if (!bottlecapIntroShown) {
+                    bottlecapIntroShown = true;
+                    floatingTexts.push({ x: null, y: null, text: '⚠️  NEW! DODGE BOTTLECAPS!', life: 160, center: true, big: true });
+                }
+            }
+
+            for (let i = bottlecaps.length - 1; i >= 0; i--) {
+                const c = bottlecaps[i];
+                c.x += c.vx * dt;
+                c.rotation += 0.05 * dt * (c.fromLeft ? 1 : -1);
+                if (c.bubbleLife > 0) c.bubbleLife -= dt;
+                // Remove when off-screen
+                if (c.x < -80 || c.x > canvas.width + 80) {
+                    bottlecaps.splice(i, 1);
+                    continue;
+                }
+                // Collision with player
+                const dx = player.x - c.x, dy = player.y - c.y;
+                if (Math.sqrt(dx*dx + dy*dy) < player.radius + c.r - 4) {
+                    triggerFreeze();
+                    bottlecaps.splice(i, 1);
+                }
+            }
+        }
     }
 
     // --- CHANGE 2: draw() now receives a timestamp from requestAnimationFrame ---
@@ -815,6 +956,92 @@
 
         // Draw powerup bottles
         powerups.forEach(p => drawSodaBottle(ctx, p.x, p.y, p.radius, p.type, p.rotation, frameCount));
+
+        // ===== DRAW BOTTLECAPS =====
+        bottlecaps.forEach(c => {
+            ctx.save();
+            ctx.translate(c.x, c.y);
+            ctx.rotate(c.rotation);
+
+            // Outer chrome ring with corrugated crown edge
+            const numTeeth = 18;
+            const innerR = c.r - 4;
+            ctx.beginPath();
+            for (let i = 0; i < numTeeth * 2; i++) {
+                const angle = (i / (numTeeth * 2)) * Math.PI * 2;
+                const r = i % 2 === 0 ? c.r : c.r - 5;
+                const px = Math.cos(angle) * r, py = Math.sin(angle) * r;
+                i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            const chromGrad = ctx.createRadialGradient(-4, -4, 2, 0, 0, c.r);
+            chromGrad.addColorStop(0, '#ffffff');
+            chromGrad.addColorStop(0.3, '#d0d8e0');
+            chromGrad.addColorStop(0.7, '#8a9bb0');
+            chromGrad.addColorStop(1, '#4a5568');
+            ctx.fillStyle = chromGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            // Inner disc — red/orange game brand color
+            ctx.beginPath();
+            ctx.arc(0, 0, innerR, 0, Math.PI * 2);
+            const capGrad = ctx.createRadialGradient(-3, -3, 1, 0, 0, innerR);
+            capGrad.addColorStop(0, '#ff6b35');
+            capGrad.addColorStop(0.5, '#e65100');
+            capGrad.addColorStop(1, '#bf360c');
+            ctx.fillStyle = capGrad;
+            ctx.fill();
+
+            // "FIZZ" label
+            ctx.fillStyle = 'rgba(255,255,255,0.92)';
+            ctx.font = `bold ${Math.round(c.r * 0.42)}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('FIZZ', 0, 0);
+
+            ctx.restore();
+
+            // Word bubble (fades after ~2.5s)
+            if (c.bubbleLife > 0) {
+                const alpha = Math.min(1, c.bubbleLife / 40);
+                const bw = 82, bh = 28, bx = c.x - bw / 2, by = c.y - c.r - 38;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                // Bubble body
+                ctx.beginPath();
+                ctx.roundRect(bx, by, bw, bh, 8);
+                ctx.fillStyle = '#fff';
+                ctx.shadowColor = 'rgba(0,0,0,0.35)';
+                ctx.shadowBlur = 6;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#e65100';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                // Tail triangle
+                ctx.beginPath();
+                ctx.moveTo(c.x - 7, by + bh);
+                ctx.lineTo(c.x + 7, by + bh);
+                ctx.lineTo(c.x, by + bh + 10);
+                ctx.closePath();
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+                ctx.strokeStyle = '#e65100';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                // Text
+                ctx.fillStyle = '#b91c1c';
+                ctx.font = 'bold 11px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowBlur = 0;
+                ctx.fillText('⚠️ DODGE ME!', c.x, by + bh / 2);
+                ctx.restore();
+            }
+        });
 
         // Draw player bubble (flashes during invulnerability)
         if (invulFrames === 0 || Math.floor(frameCount / 5) % 2 === 0) {

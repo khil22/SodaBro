@@ -296,7 +296,7 @@
     let score = 0, level = 1, iceHits = 0;
     let freezeFrames = 0, invulFrames = 0, frameCount = 0;
     let activePowerup = null, powerupTime = 0, scoreToNextLevel = 50;
-    let soundEnabled = false;
+    let soundEnabled = localStorage.getItem('fizzFallSound') !== 'false'; // default ON
 
     // --- CHANGE 2: Delta-time variables for consistent speed across all devices ---
     let lastTimestamp = null;
@@ -445,6 +445,7 @@
     function toggleSound() {
         initAudio();
         soundEnabled = !soundEnabled;
+        localStorage.setItem('fizzFallSound', soundEnabled);
         document.getElementById('sound-toggle').innerText = soundEnabled ? '🔊' : '🔇';
         if (soundEnabled) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -662,7 +663,7 @@
         initAudio();
         gameActive = true; isLevelingUp = false; isGameOver = false;
         score = 0; level = 1; iceHits = 0;
-        freezeFrames = 0; invulFrames = 0; frameCount = 0;
+        freezeFrames = 0; invulFrames = 90; frameCount = 0; // 90 dt-units = 1.5s grace period
         obstacles = []; powerups = []; floatingTexts = []; bottlecaps = [];
         bottlecapSpawnAccum = 0;
         bottlecapIntroShown = false;
@@ -697,6 +698,7 @@
         document.getElementById('level-screen').style.display = 'none';
         gameActive = true;
         bottlecapSpawnAccum = 0;
+        invulFrames = 90; // 1.5s immunity at level start
         lastTimestamp = null;
         spawnAccum = 0;
         rushWarnLastTick = 0;
@@ -1121,6 +1123,9 @@
 
         requestAnimationFrame(draw);
     }
+
+    // Sync button icon with initial sound state (may differ from HTML default if localStorage set)
+    document.getElementById('sound-toggle').innerText = soundEnabled ? '🔊' : '🔇';
 
     // Kick off the loop — pass timestamp via rAF (not a direct call)
     requestAnimationFrame(draw);

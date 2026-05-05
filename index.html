@@ -3,56 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>SodaBro</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-        #sidebar { width: 200px; float: left; }
-        #content { margin-left: 220px; padding: 20px; }
-        .tab { display: none; }
-        .tab.active { display: block; }
-    </style>
+    <title>Prompt Library</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="sidebar">
-        <h2>Filters</h2>
-        <input type="checkbox" id="filter1" /> Label 1<br />
-        <input type="checkbox" id="filter2" /> Label 2<br />
+        <h1>Prompt Library</h1>
+        <div id="statsPanel">
+            <div id="statPrompts">0</div>
+            <div id="statShared">0</div>
+            <div id="statResults">0</div>
+            <div id="statVersions">0</div>
+        </div>
+        <input id="searchInput" type="text" placeholder="Search prompts...">
+        <div id="workspaceFilter"></div>
+        <div id="categoryFilter"></div>
+        <div id="promptWorkspace"></div>
+        <button id="newPromptBtn">New Prompt</button>
     </div>
-    <div id="content">
-        <h1>Application Stats</h1>
-        <div id="stats">
-            <p>Stat 1: 10</p>
-            <p>Stat 2: 20</p>
+    <div id="editor">
+        <h2 id="editorTitle">Editor</h2>
+        <div id="editorMeta"></div>
+        <input id="promptTitle" type="text" placeholder="Title">
+        <input id="promptCategory" type="text" placeholder="Category">
+        <input id="promptTags" type="text" placeholder="Tags">
+        <textarea id="promptText" placeholder="Prompt text..."></textarea>
+        <div id="scopeInputs">
+            <input id="scopeSituation" type="text" placeholder="Situation">
+            <input id="scopeContext" type="text" placeholder="Context">
+            <input id="scopeObjective" type="text" placeholder="Objective">
+            <input id="scopeParameters" type="text" placeholder="Parameters">
+            <input id="scopeExamples" type="text" placeholder="Examples">
         </div>
-        <h2>Editor</h2>
-        <div class="tabs">
-            <button onclick="openTab(event, 'tab1')">Tab 1</button>
-            <button onclick="openTab(event, 'tab2')">Tab 2</button>
-        </div>
-        <div id="tab1" class="tab active">
-            <h3>Tab 1 Content</h3>
-            <textarea></textarea>
-        </div>
-        <div id="tab2" class="tab">
-            <h3>Tab 2 Content</h3>
-            <textarea></textarea>
-        </div>
+        <button id="saveBtn">Save</button>
+        <button id="duplicateBtn">Duplicate</button>
+        <button id="shareBtn">Share</button>
     </div>
-    <script>
-        function openTab(evt, tabName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tab");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-            tablinks = document.getElementsByTagName("button");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.className += " active";
-        }
-    </script>
+    <div id="runner">
+        <h2>Runner</h2>
+        <input id="runInput" type="text" placeholder="Input">
+        <div id="runOutput"></div>
+        <input id="runModel" type="text" placeholder="Model">
+    </div>
+    <div id="versions">
+        <h2>Versions</h2>
+        <ul id="versionsList"></ul>
+    </div>
+    <div id="results">
+        <h2>Results</h2>
+        <ul id="resultsList"></ul>
+    </div>
+    <div id="sharePreview"></div>
+    <div id="shareStatusText"></div>
+    <script src="scripts.js"></script>
 </body>
 </html>
+
+<script>
+function loadData() { /* function implementation */ }
+function saveData() { /* function implementation */ }
+function getSelectedPrompt() { /* function implementation */ }
+function getWorkspaceName() { /* function implementation */ }
+function getFilteredPrompts() { /* function implementation */ }
+function render() { /* function implementation */ }
+function renderStats() { /* function implementation */ }
+function renderFilters() { /* function implementation */ }
+function renderSelect() { /* function implementation */ }
+function renderPromptList() { /* function implementation */ }
+function renderEditor() { /* function implementation */ }
+function renderVersions() { /* function implementation */ }
+function renderResults() { /* function implementation */ }
+function renderTabs() { /* function implementation */ }
+function wireEvents() { /* function implementation */ }
+function createPrompt() { /* function implementation */ }
+function savePromptFromForm() { /* function implementation */ }
+function duplicatePrompt() { /* function implementation */ }
+function toggleShare() { /* function implementation */ }
+function saveVersion() { /* function implementation */ }
+function saveResult() { /* function implementation */ }
+function savePromptFromFormSilently() { /* function implementation */ }
+function copyPromptText() { /* function implementation */ }
+function copyShareSummary() { /* function implementation */ }
+function buildSharePreview() { /* function implementation */ }
+function exportLibrary() { /* function implementation */ }
+function importLibrary() { /* function implementation */ }
+function escapeHtml(text) { /* function implementation */ }
+</script>

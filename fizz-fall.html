@@ -216,6 +216,77 @@
             opacity: 0.7;
             margin-top: 5px;
         }
+
+        /* ── LEADERBOARD & NAME ENTRY ── */
+        #name-entry-screen, #leaderboard-screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: calc(100% - 80px);
+            background: var(--theme-color);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            z-index: 15;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #player-name-input {
+            font-size: 22px;
+            padding: 10px 18px;
+            border-radius: 30px;
+            border: 3px solid white;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-align: center;
+            width: 220px;
+            margin-top: 14px;
+            outline: none;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: bold;
+        }
+        #player-name-input::placeholder { color: rgba(255,255,255,0.6); }
+
+        .btn-skip {
+            background: transparent;
+            color: rgba(255,255,255,0.7);
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 15px;
+            padding: 8px 28px;
+            margin-top: 10px;
+            box-shadow: none;
+        }
+
+        #lb-list {
+            width: 100%;
+            max-width: 340px;
+            margin: 10px 0 16px;
+        }
+
+        .lb-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 7px 14px;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .lb-row.lb-highlight {
+            background: rgba(255,255,255,0.35);
+            border: 2px solid white;
+        }
+        .lb-rank  { width: 28px; text-align: left; font-size: 16px; }
+        .lb-name  { flex: 1; text-align: left; padding: 0 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .lb-score { text-align: right; min-width: 44px; }
+        .lb-level { text-align: right; min-width: 44px; opacity: 0.8; font-size: 12px; }
+        .lb-empty { opacity: 0.7; font-size: 14px; margin: 20px 0; }
     </style>
     <!-- Paste Google AdSense Script Here -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5797310077476329"
@@ -249,6 +320,7 @@
         <p>Soda Powerups • Avoid the Ice</p>
         <div style="font-size: 70px; margin: 15px;">🫧</div>
         <button onclick="startGame()">START</button>
+        <button onclick="showLeaderboard()" style="font-size:18px; padding:10px 30px; margin-top:10px; background:rgba(255,255,255,0.2); color:white; border:2px solid white; box-shadow:none;">🏆 Top Scores</button>
         <p class="controls-hint">Mobile: Drag the bubble • Desktop: ↑↓←→ Arrow Keys</p>
         <p class="controls-hint">[ENTER] to Start • [SPACE] to Mute</p>
     </div>
@@ -260,12 +332,32 @@
         <p class="controls-hint">Or press [ENTER]</p>
     </div>
 
+    <!-- NAME ENTRY — shown after game over before saving score -->
+    <div id="name-entry-screen">
+        <h1 style="font-size: 40px; margin:0;">CRACKED!</h1>
+        <p style="margin:6px 0 0;">Your score:</p>
+        <div id="name-entry-score" style="font-size: 64px; font-weight:bold; line-height:1.1;">0</div>
+        <p style="margin:10px 0 0; font-size:14px;">Enter your name for the leaderboard:</p>
+        <input id="player-name-input" type="text" maxlength="12" placeholder="Your name..." autocomplete="off" />
+        <button onclick="submitAndContinue()">SUBMIT SCORE</button>
+        <button class="btn-skip" onclick="skipAndContinue()">Skip →</button>
+    </div>
+
+    <!-- LEADERBOARD SCREEN -->
+    <div id="leaderboard-screen">
+        <h1 style="font-size: 42px; margin:0 0 4px;">🏆 TOP SCORES</h1>
+        <p style="margin:0 0 8px; font-size:13px; opacity:0.8;">Fizz Fall Hall of Fame</p>
+        <div id="lb-list"><p class="lb-empty">Loading...</p></div>
+        <button onclick="hideLeaderboard()">BACK</button>
+    </div>
+
     <div id="game-over-screen" style="display:none;">
         <h1 style="font-size: 40px;">CRACKED!</h1>
         <p>Too much ice!</p>
         <div id="finalScore" style="font-size: 72px; font-weight: bold;">0</div>
         <button onclick="resetGame()">REPLAY</button>
-        <p class="controls-hint">Or press [ENTER]</p>
+        <button onclick="showLeaderboard()" style="font-size:18px; padding:10px 30px; margin-top:10px; background:rgba(255,255,255,0.2); color:white; border:2px solid white; box-shadow:none;">🏆 Top Scores</button>
+        <p class="controls-hint">Or press [ENTER] to replay</p>
     </div>
 
     <!-- GOOGLE ADSENSE AD UNIT -->
@@ -622,8 +714,11 @@
         if (iceHits >= 3) {
             gameActive = false;
             isGameOver = true;
-            document.getElementById('game-over-screen').style.display = 'flex';
-            document.getElementById('finalScore').innerText = score;
+            // Show name entry so player can save their score
+            document.getElementById('name-entry-score').innerText = score;
+            document.getElementById('name-entry-screen').style.display = 'flex';
+            document.getElementById('player-name-input').value = '';
+            setTimeout(() => document.getElementById('player-name-input').focus(), 100);
             playSound(100, 'sawtooth', 0.4, 0.2);
             return;
         }
@@ -682,6 +777,8 @@
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('game-over-screen').style.display = 'none';
         document.getElementById('level-screen').style.display = 'none';
+        document.getElementById('name-entry-screen').style.display = 'none';
+        document.getElementById('leaderboard-screen').style.display = 'none';
         frozenAlert.style.display = 'none';
         powerupUI.style.display = 'none';
         scoreElement.innerText = "0";
@@ -1141,11 +1238,120 @@
         requestAnimationFrame(draw);
     }
 
+    // ── LEADERBOARD UI FUNCTIONS ──
+    let lastSubmittedScore = 0;
+    let lastSubmittedLevel = 0;
+
+    function showGameOver() {
+        document.getElementById('finalScore').innerText = score;
+        document.getElementById('game-over-screen').style.display = 'flex';
+    }
+
+    async function submitAndContinue() {
+        const nameEl = document.getElementById('player-name-input');
+        const name = nameEl.value.trim().replace(/[^a-zA-Z0-9_ ]/g, '').substring(0, 12);
+        if (!name) { nameEl.focus(); nameEl.style.borderColor = '#ffe082'; return; }
+        nameEl.style.borderColor = 'white';
+        const btn = document.querySelector('#name-entry-screen button');
+        btn.innerText = 'SAVING...';
+        btn.disabled = true;
+        await window.submitScore(name, score, level);
+        document.getElementById('name-entry-screen').style.display = 'none';
+        showGameOver();
+    }
+
+    function skipAndContinue() {
+        document.getElementById('name-entry-screen').style.display = 'none';
+        showGameOver();
+    }
+
+    // Allow Enter key to submit name
+    document.getElementById('player-name-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); submitAndContinue(); }
+    });
+
+    let lbCallerScreen = 'start'; // tracks which screen opened the leaderboard
+
+    async function showLeaderboard() {
+        // Remember which screen we came from
+        lbCallerScreen = document.getElementById('game-over-screen').style.display === 'flex' ? 'gameover' : 'start';
+        document.getElementById('leaderboard-screen').style.display = 'flex';
+        const list = document.getElementById('lb-list');
+        list.innerHTML = '<p class="lb-empty">Loading...</p>';
+        const scores = await window.loadLeaderboard();
+        if (!scores || scores.length === 0) {
+            list.innerHTML = '<p class="lb-empty">No scores yet — be the first! 🫧</p>';
+            return;
+        }
+        const medals = ['🥇','🥈','🥉'];
+        list.innerHTML = scores.map((s, i) => `
+            <div class="lb-row">
+                <span class="lb-rank">${medals[i] || (i+1)}</span>
+                <span class="lb-name">${escLb(s.name)}</span>
+                <span class="lb-score">${s.score}</span>
+                <span class="lb-level">Lv${s.level}</span>
+            </div>`).join('');
+    }
+
+    function hideLeaderboard() {
+        document.getElementById('leaderboard-screen').style.display = 'none';
+    }
+
+    function escLb(str) {
+        return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
     // Sync button icon with initial sound state (may differ from HTML default if localStorage set)
     document.getElementById('sound-toggle').innerText = soundEnabled ? '🔊' : '🔇';
 
     // Kick off the loop — pass timestamp via rAF (not a direct call)
     requestAnimationFrame(draw);
+</script>
+
+<!-- Firebase — loaded as ES module, exposes submitScore + loadLeaderboard globally -->
+<script type="module">
+    import { initializeApp }    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, addDoc, getDocs,
+             query, orderBy, limit, serverTimestamp }
+        from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const firebaseConfig = {
+        apiKey:            "AIzaSyB1jXrzVBt64s3Q9p4ePIXOQiKH8ROl0A0",
+        authDomain:        "fizz-fall.firebaseapp.com",
+        projectId:         "fizz-fall",
+        storageBucket:     "fizz-fall.firebasestorage.app",
+        messagingSenderId: "522026655525",
+        appId:             "1:522026655525:web:64e13aa277c09dcd8344cc"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    window.submitScore = async function(name, score, level) {
+        try {
+            await addDoc(collection(db, 'scores'), {
+                name:      name.trim().substring(0, 12),
+                score:     Number(score),
+                level:     Number(level),
+                timestamp: serverTimestamp()
+            });
+            return true;
+        } catch(e) {
+            console.error('Score submit failed:', e);
+            return false;
+        }
+    };
+
+    window.loadLeaderboard = async function() {
+        try {
+            const q        = query(collection(db, 'scores'), orderBy('score', 'desc'), limit(10));
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(d => d.data());
+        } catch(e) {
+            console.error('Leaderboard load failed:', e);
+            return [];
+        }
+    };
 </script>
 </body>
 </html>

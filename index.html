@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SodaBro</title>
     <meta name="description" content="SodaBro — Avoid the Ice. Get the Bottles. Free browser game, no download needed.">
     <meta name="theme-color" content="#08091a">
@@ -14,10 +14,18 @@
     <meta name="apple-mobile-web-app-title" content="SodaBro">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 
     <style>
         :root {
+            --soda-orange: #ff9800;
+            --soda-dark: #e65100;
+            --glass-bg: #fff3e0;
+            --ui-text: #5d4037;
+            --theme-color: #ff9800;
+            --ice-blue: #a5f3fc;
+            /* --- Splash page palette --- */
             --orange:  #ff6b35;
             --pink:    #ff2166;
             --teal:    #00f0c8;
@@ -29,23 +37,257 @@
             --muted:   #6a6785;
         }
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; }
-
         body {
-            font-family: 'Nunito', sans-serif;
-            background: var(--dark);
-            color: var(--text);
-            min-height: 100dvh;
-            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #08091a;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
+            height: 100vh;
+            touch-action: none;
         }
 
-        body::before {
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 100%;
+            max-height: 800px;
+            background: linear-gradient(to bottom, #fff3e0, #ffe0b2);
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: background 1s ease;
+        }
+
+        canvas {
+            display: block;
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Coach / Instruction Banner (replaces old ad slot) */
+        #coach-bar {
+            width: 100%;
+            height: 80px;
+            background: #fff3e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            border-top: 3px solid var(--soda-orange);
+            pointer-events: none;
+            box-sizing: border-box;
+            padding: 0 14px;
+            transition: background 0.25s ease;
+        }
+
+        #coach-message {
+            font-weight: 800;
+            font-size: 21px;
+            letter-spacing: 0.4px;
+            line-height: 1.15;
+            text-align: center;
+            color: var(--soda-dark);
+            transition: color 0.2s ease;
+        }
+
+        /* Mood states */
+        #coach-bar.mood-idle   { background: #fff3e0; }
+        #coach-bar.mood-idle   #coach-message { color: #5d4037; }
+        #coach-bar.mood-good   { background: #e8f5e9; }
+        #coach-bar.mood-good   #coach-message { color: #2e7d32; }
+        #coach-bar.mood-rush   { background: #fff3e0; }
+        #coach-bar.mood-rush   #coach-message { color: #e65100; }
+        #coach-bar.mood-warn   { background: #fff8e1; }
+        #coach-bar.mood-warn   #coach-message { color: #ef6c00; }
+        #coach-bar.mood-danger { background: #ffebee; }
+        #coach-bar.mood-danger #coach-message { color: #c62828; }
+
+        #coach-bar.mood-warn   #coach-message,
+        #coach-bar.mood-danger #coach-message {
+            animation: coachPulse 0.55s ease-in-out infinite;
+        }
+        @keyframes coachPulse {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.09); }
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 80px); /* Keep UI above footer */
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            pointer-events: auto;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: var(--ui-text);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-width: 80px;
+            text-align: center;
+            border: 2px solid var(--theme-color);
+        }
+
+        #freeze-status {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .thaw-meter {
+            width: 40px;
+            height: 12px;
+            background: #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #999;
+        }
+
+        .thaw-fill {
+            height: 100%;
+            width: 100%;
+            background: var(--ice-blue);
+            transition: background 0.3s;
+        }
+
+        .thaw-fill.cracked {
+            background: #ef4444;
+        }
+
+        #frozen-alert {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 64px;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 0 10px #00e5ff, 4px 4px 0px #0288d1;
+            display: none;
+            z-index: 30;
+            letter-spacing: 4px;
+            font-style: italic;
+        }
+
+        #sound-toggle {
+            position: absolute;
+            top: 85px;
+            right: 20px;
+            background: rgba(255,255,255,0.9);
+            border: 2px solid var(--theme-color);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            pointer-events: auto;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 20;
+        }
+
+        #game-over-screen, #level-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 80px);
+            background: var(--theme-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            z-index: 10;
+            pointer-events: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 15px 45px;
+            font-size: 24px;
+            background: white;
+            color: var(--theme-color);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+
+        .powerup-timer {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            display: none;
+            z-index: 20;
+        }
+
+        .controls-hint {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        /* ===================================================== */
+        /* ===== SPLASH START SCREEN (from index.html design) === */
+        /* ===================================================== */
+        #start-screen {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: var(--dark);
+            color: var(--text);
+            font-family: 'Nunito', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            overflow-x: hidden;
+            pointer-events: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #start-screen::before {
             content: '';
-            position: fixed;
+            position: absolute;
             inset: 0;
             background:
                 radial-gradient(ellipse 80% 60% at 15% 0%,   rgba(255,107,53,.22) 0%, transparent 55%),
@@ -56,46 +298,46 @@
         }
 
         /* Rising bubbles */
-        .bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-        .bub {
+        #start-screen .bubbles { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        #start-screen .bub {
             position: absolute; bottom: -50px; border-radius: 50%;
             border: 1.5px solid rgba(255,255,255,0.13);
             background: rgba(255,255,255,0.025);
             animation: rise linear infinite;
         }
-        .bub:nth-child(1) { width:14px; height:14px; left:7%;  animation-duration:9s;  animation-delay:0s;   }
-        .bub:nth-child(2) { width:8px;  height:8px;  left:22%; animation-duration:12s; animation-delay:2.5s; }
-        .bub:nth-child(3) { width:22px; height:22px; left:38%; animation-duration:10s; animation-delay:4s;   }
-        .bub:nth-child(4) { width:6px;  height:6px;  left:55%; animation-duration:14s; animation-delay:1s;   }
-        .bub:nth-child(5) { width:18px; height:18px; left:70%; animation-duration:11s; animation-delay:3s;   }
-        .bub:nth-child(6) { width:10px; height:10px; left:85%; animation-duration:8s;  animation-delay:5.5s; }
-        .bub:nth-child(7) { width:26px; height:26px; left:3%;  animation-duration:13s; animation-delay:7s;   }
-        .bub:nth-child(8) { width:7px;  height:7px;  left:48%; animation-duration:16s; animation-delay:0.5s; }
-        .bub:nth-child(9) { width:12px; height:12px; left:93%; animation-duration:10s; animation-delay:2s;   }
+        #start-screen .bub:nth-child(1) { width:14px; height:14px; left:7%;  animation-duration:9s;  animation-delay:0s;   }
+        #start-screen .bub:nth-child(2) { width:8px;  height:8px;  left:22%; animation-duration:12s; animation-delay:2.5s; }
+        #start-screen .bub:nth-child(3) { width:22px; height:22px; left:38%; animation-duration:10s; animation-delay:4s;   }
+        #start-screen .bub:nth-child(4) { width:6px;  height:6px;  left:55%; animation-duration:14s; animation-delay:1s;   }
+        #start-screen .bub:nth-child(5) { width:18px; height:18px; left:70%; animation-duration:11s; animation-delay:3s;   }
+        #start-screen .bub:nth-child(6) { width:10px; height:10px; left:85%; animation-duration:8s;  animation-delay:5.5s; }
+        #start-screen .bub:nth-child(7) { width:26px; height:26px; left:3%;  animation-duration:13s; animation-delay:7s;   }
+        #start-screen .bub:nth-child(8) { width:7px;  height:7px;  left:48%; animation-duration:16s; animation-delay:0.5s; }
+        #start-screen .bub:nth-child(9) { width:12px; height:12px; left:93%; animation-duration:10s; animation-delay:2s;   }
 
         @keyframes rise {
-            0%   { transform: translateY(0) translateX(0);       opacity: 0; }
+            0%   { transform: translateY(0) translateX(0);          opacity: 0; }
             8%   { opacity: 1; }
             92%  { opacity: 0.7; }
             100% { transform: translateY(-110dvh) translateX(15px); opacity: 0; }
         }
 
-        /* Page layout */
-        .page {
+        /* Splash layout */
+        #start-screen .page {
             position: relative; z-index: 1;
-            width: 100%; max-width: 430px; min-height: 100dvh;
+            width: 100%; max-width: 430px;
+            min-height: 100%;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             padding: 52px 24px 44px;
         }
 
         /* Logo */
-        .logo-wrap {
+        #start-screen .logo-wrap {
             text-align: center;
             animation: fadeDown .65s cubic-bezier(.22,1,.36,1) both;
         }
-
-        .logo {
+        #start-screen .logo {
             font-family: 'Boogaloo', cursive;
             font-size: clamp(78px, 23vw, 104px);
             line-height: 0.92;
@@ -108,99 +350,88 @@
             filter: drop-shadow(0 2px 32px rgba(255,107,53,.35));
             animation: shimmer 5s ease-in-out infinite;
         }
-
         @keyframes shimmer {
             0%, 100% { background-position: 0% 50%; }
             50%       { background-position: 100% 50%; }
         }
-
-        .logo-eyebrow {
+        #start-screen .logo-eyebrow {
             font-weight: 900; font-size: 11px;
             letter-spacing: 4px; text-transform: uppercase;
             color: var(--muted); margin-top: 6px;
         }
 
         /* Tagline */
-        .tagline {
+        #start-screen .tagline {
             text-align: center; margin: 32px 0 36px;
             animation: fadeUp .65s .18s cubic-bezier(.22,1,.36,1) both;
         }
-
-        .tagline h2 {
+        #start-screen .tagline h2 {
             font-family: 'Boogaloo', cursive;
             font-size: clamp(28px, 8.5vw, 38px);
             line-height: 1.25; color: var(--text); margin-bottom: 12px;
         }
-
-        .tagline h2 .ice { color: #a5f3fc; }
-        .tagline h2 .btl {
+        #start-screen .tagline h2 .ice { color: #a5f3fc; }
+        #start-screen .tagline h2 .btl {
             background: linear-gradient(90deg, var(--orange), var(--yellow));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
-
-        .tagline p { font-size: 14px; color: var(--muted); line-height: 1.65; max-width: 270px; margin: 0 auto; }
+        #start-screen .tagline p { font-size: 14px; color: var(--muted); line-height: 1.65; max-width: 270px; margin: 0 auto; }
 
         /* Play button */
-        .play-btn {
+        #start-screen .play-btn {
             display: flex; align-items: center; justify-content: center; gap: 10px;
             width: 100%; max-width: 310px; padding: 20px 0;
             background: linear-gradient(135deg, var(--orange), var(--pink));
             color: #fff; font-family: 'Boogaloo', cursive;
             font-size: 30px; letter-spacing: 2px; text-decoration: none;
-            border-radius: 60px;
+            border-radius: 60px; cursor: pointer; user-select: none;
             animation: fadeUp .65s .32s cubic-bezier(.22,1,.36,1) both, glow 2.8s 1s ease-in-out infinite;
             transition: transform .12s, filter .12s;
             -webkit-tap-highlight-color: transparent;
         }
-        .play-btn:active { transform: scale(0.95); filter: brightness(0.9); }
-
+        #start-screen .play-btn:active { transform: scale(0.95); filter: brightness(0.9); }
         @keyframes glow {
             0%, 100% { box-shadow: 0 0  0  0   rgba(255,107,53,.5), 0 8px 32px rgba(255,33,102,.3); }
             50%       { box-shadow: 0 0  0 18px rgba(255,107,53,.0), 0 8px 32px rgba(255,33,102,.5); }
         }
 
         /* Shortcut section */
-        .shortcut-section {
+        #start-screen .shortcut-section {
             width: 100%; max-width: 360px; margin-top: 40px;
             animation: fadeUp .65s .46s cubic-bezier(.22,1,.36,1) both;
         }
-
-        .shortcut-label {
+        #start-screen .shortcut-label {
             text-align: center; font-size: 10px; font-weight: 900;
             letter-spacing: 3px; text-transform: uppercase;
             color: var(--muted); margin-bottom: 14px;
         }
-
-        .sc-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-        .sc-card {
+        #start-screen .sc-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        #start-screen .sc-card {
             background: var(--card); border-radius: 18px;
             padding: 18px 14px 16px; border: 1px solid var(--border);
         }
-        .sc-card.apple   { border-color: rgba(255,255,255,0.11); }
-        .sc-card.android { border-color: rgba(0,240,200,0.18); }
-
-        .sc-icon  { font-size: 24px; display: block; margin-bottom: 8px; }
-        .sc-title { font-size: 13px; font-weight: 900; color: var(--text); margin-bottom: 10px; line-height: 1.2; }
-
-        .sc-steps { list-style: none; padding: 0; counter-reset: steps; }
-        .sc-steps li {
+        #start-screen .sc-card.apple   { border-color: rgba(255,255,255,0.11); }
+        #start-screen .sc-card.android { border-color: rgba(0,240,200,0.18); }
+        #start-screen .sc-icon  { font-size: 24px; display: block; margin-bottom: 8px; }
+        #start-screen .sc-title { font-size: 13px; font-weight: 900; color: var(--text); margin-bottom: 10px; line-height: 1.2; }
+        #start-screen .sc-steps { list-style: none; padding: 0; counter-reset: steps; }
+        #start-screen .sc-steps li {
             counter-increment: steps; font-size: 11px; color: var(--muted);
             line-height: 1.65; padding-left: 16px; position: relative;
         }
-        .sc-steps li::before {
+        #start-screen .sc-steps li::before {
             content: counter(steps) "."; position: absolute; left: 0;
             color: var(--orange); font-weight: 900; font-size: 10px;
         }
-        .sc-steps li strong { color: rgba(255,255,255,0.7); font-weight: 700; }
+        #start-screen .sc-steps li strong { color: rgba(255,255,255,0.7); font-weight: 700; }
 
         /* Footer */
-        .footer {
+        #start-screen .footer {
             margin-top: 36px; font-size: 11px; color: var(--muted); text-align: center;
             animation: fadeUp .65s .58s cubic-bezier(.22,1,.36,1) both;
         }
-        .footer a { color: var(--orange); text-decoration: none; }
-        .footer a:hover { text-decoration: underline; }
+        #start-screen .footer a { color: var(--orange); text-decoration: none; }
+        #start-screen .footer a:hover { text-decoration: underline; }
 
         @keyframes fadeDown {
             from { opacity: 0; transform: translateY(-28px); }
@@ -214,57 +445,975 @@
 </head>
 <body>
 
-<div class="bubbles">
-    <div class="bub"></div><div class="bub"></div><div class="bub"></div>
-    <div class="bub"></div><div class="bub"></div><div class="bub"></div>
-    <div class="bub"></div><div class="bub"></div><div class="bub"></div>
-</div>
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="frozen-alert">FROZEN</div>
+    
+    <div id="ui-overlay">
+        <div class="stats-row">
+            <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                <div class="stat-box">Score: <span id="currentScore">0</span></div>
+                <div id="freeze-status">
+                    <div class="thaw-meter"><div class="thaw-fill" id="hit-1"></div></div>
+                    <div class="thaw-meter"><div class="thaw-fill" id="hit-2"></div></div>
+                </div>
+            </div>
+            <div class="stat-box">Level: <span id="currentLevel">1</span></div>
+        </div>
 
-<main class="page">
-
-    <div class="logo-wrap">
-        <div class="logo">SodaBro</div>
-        <div class="logo-eyebrow">Free Browser Game</div>
+        <button id="sound-toggle" onclick="toggleSound()">🔇</button>
+        <div id="powerup-ui" class="powerup-timer">POWERUP ACTIVE</div>
     </div>
 
-    <div class="tagline">
-        <h2>Avoid the <span class="ice">Ice</span>.<br>Get the <span class="btl">Bottles</span>.</h2>
-        <p>Dodge falling ice cubes, grab soda powerups, and smash your way up the leaderboard. No download. No login. Just play.</p>
-    </div>
+    <div id="start-screen">
+        <div class="bubbles">
+            <div class="bub"></div><div class="bub"></div><div class="bub"></div>
+            <div class="bub"></div><div class="bub"></div><div class="bub"></div>
+            <div class="bub"></div><div class="bub"></div><div class="bub"></div>
+        </div>
 
-    <a href="sodabro-game.html" class="play-btn">PLAY NOW &nbsp;🫧</a>
+        <div class="page">
 
-    <div class="shortcut-section">
-        <p class="shortcut-label">📲 Add shortcut to your home screen</p>
-        <div class="sc-cards">
-
-            <div class="sc-card apple">
-                <span class="sc-icon"></span>
-                <div class="sc-title">iPhone &amp; iPad</div>
-                <ul class="sc-steps">
-                    <li>Tap the <strong>Share</strong> button below</li>
-                    <li>Tap <strong>"Add to Home Screen"</strong></li>
-                    <li>Tap <strong>Add</strong></li>
-                </ul>
+            <div class="logo-wrap">
+                <div class="logo">SodaBro</div>
+                <div class="logo-eyebrow">Free Browser Game</div>
             </div>
 
-            <div class="sc-card android">
-                <span class="sc-icon">🤖</span>
-                <div class="sc-title">Android</div>
-                <ul class="sc-steps">
-                    <li>Tap <strong>⋮ menu</strong> in Chrome</li>
-                    <li>Tap <strong>"Add to Home Screen"</strong></li>
-                    <li>Tap <strong>Add</strong></li>
-                </ul>
+            <div class="tagline">
+                <h2>Avoid the <span class="ice">Ice</span>.<br>Get the <span class="btl">Bottles</span>.</h2>
+                <p>Dodge falling ice cubes, grab soda powerups, and smash your way up the leaderboard. No download. No login. Just play.</p>
+            </div>
+
+            <a class="play-btn" id="playBtn" onclick="startGame()">PLAY NOW &nbsp;🫧</a>
+
+            <div class="shortcut-section">
+                <p class="shortcut-label">📲 Add shortcut to your home screen</p>
+                <div class="sc-cards">
+
+                    <div class="sc-card apple">
+                        <span class="sc-icon">🍎</span>
+                        <div class="sc-title">iPhone &amp; iPad</div>
+                        <ul class="sc-steps">
+                            <li>Tap the <strong>Share</strong> button</li>
+                            <li>Tap <strong>"Add to Home Screen"</strong></li>
+                            <li>Tap <strong>Add</strong></li>
+                        </ul>
+                    </div>
+
+                    <div class="sc-card android">
+                        <span class="sc-icon">🤖</span>
+                        <div class="sc-title">Android</div>
+                        <ul class="sc-steps">
+                            <li>Tap <strong>⋮ menu</strong> in Chrome</li>
+                            <li>Tap <strong>"Add to Home Screen"</strong></li>
+                            <li>Tap <strong>Add</strong></li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="footer">
+                <a href="privacy.html">Privacy Policy</a> &nbsp;·&nbsp; © 2026 SodaBro
             </div>
 
         </div>
     </div>
 
-    <div class="footer">
-        <a href="privacy.html">Privacy Policy</a> &nbsp;·&nbsp; © 2026 SodaBro
+    <div id="level-screen" style="display:none;">
+        <h1 style="font-size: 44px;">LEVEL UP!</h1>
+        <div id="badge-area"></div>
+        <button onclick="nextLevel()">CONTINUE</button>
+        <p class="controls-hint">Or press [ENTER]</p>
     </div>
 
-</main>
+    <div id="game-over-screen" style="display:none;">
+        <h1 style="font-size: 40px;">CRACKED!</h1>
+        <p>Too much ice!</p>
+        <div id="finalScore" style="font-size: 72px; font-weight: bold;">0</div>
+        <button onclick="resetGame()">REPLAY</button>
+        <p class="controls-hint">Or press [ENTER]</p>
+    </div>
+
+    <!-- COACH / INSTRUCTION BANNER -->
+    <div id="coach-bar" class="mood-idle">
+        <div id="coach-message">🥤 Press START to play</div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const frozenAlert = document.getElementById('frozen-alert');
+    const scoreElement = document.getElementById('currentScore');
+    const levelElement = document.getElementById('currentLevel');
+    const powerupUI = document.getElementById('powerup-ui');
+    const hit1 = document.getElementById('hit-1');
+    const hit2 = document.getElementById('hit-2');
+    const coachBar = document.getElementById('coach-bar');
+    const coachMessage = document.getElementById('coach-message');
+
+    let gameActive = false, isLevelingUp = false, isGameOver = false;
+    let score = 0, level = 1, iceHits = 0;
+    let freezeFrames = 0, invulFrames = 0, frameCount = 0;
+    let activePowerup = null, powerupTime = 0, scoreToNextLevel = 50;
+    let soundEnabled = localStorage.getItem('fizzFallSound') !== 'false'; // default ON
+
+    // --- CHANGE 2: Delta-time variables for consistent speed across all devices ---
+    let lastTimestamp = null;
+    let spawnAccum = 0; // accumulates dt for spawn timing
+    let rushWarnLastTick = 0; // tracks last second-tick played during rush warning
+
+    // Player now has vy for full 2D movement
+    const player = { x: 0, y: 150, radius: 18, vx: 0, vy: 0, friction: 0.92 };
+    let obstacles = [], powerups = [], backgroundBubbles = [], floatingTexts = [], bottlecaps = [];
+    let bottlecapSpawnAccum = 0;
+    let bottlecapIntroShown = false; // one-time "NEW THREAT" banner per run
+    let rushIntroSpawned = false;    // guarantees one rush bottle in first 5s of Level 1
+    let rushIntroDelay = 0;          // random dt countdown before spawning it
+
+    // --- CHANGE 1: Key state tracking for held-key movement (replaces impulse boosts) ---
+    const keys = {};
+    let isDragging = false; // tracks whether a finger is actively dragging the bubble
+
+    // ===== MUSIC ENGINE =====
+    let audioCtx;
+
+    // Note frequencies
+    const N = {
+        C3:130.81, E3:164.81, F3:174.61, G3:196.00, A3:220.00,
+        C4:261.63, D4:293.66, E4:329.63, G4:392.00, A4:440.00,
+        C5:523.25, D5:587.33, E5:659.25, G5:783.99, A5:880.00,
+        _:0
+    };
+
+    // 16-step sequences — upbeat C-major chiptune hook
+    const SEQ_LEAD = [
+        N.G5, N._,  N.E5, N.G5,
+        N.C5, N._,  N.E5, N._,
+        N.G5, N.E5, N.A5, N._,
+        N.G5, N._,  N.D5, N.E5
+    ];
+    const SEQ_BASS = [
+        N.C3, N._,  N.G3, N._,
+        N.C3, N._,  N.E3, N.G3,
+        N.F3, N._,  N.G3, N._,
+        N.C3, N._,  N.G3, N._
+    ];
+    // Rush mode: same shapes pitched up a perfect 4th, more aggressive feel
+    const SEQ_LEAD_RUSH = SEQ_LEAD.map(f => f > 0 ? f * (4/3) : 0);
+    const SEQ_BASS_RUSH = SEQ_BASS.map(f => f > 0 ? f * (4/3) : 0);
+
+    const KICK_STEPS  = new Set([0, 4, 8, 12]);
+    const SNARE_STEPS = new Set([4, 12]);
+    const HAT_STEPS   = new Set([0, 2, 4, 6, 8, 10, 12, 14]);
+
+    let musicStep = 0;
+    let musicNextTime = 0;
+    const SCHED_AHEAD = 0.14; // seconds to schedule ahead
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function scheduleOsc(freq, type, time, dur, vol) {
+        if (!audioCtx) return;
+        try {
+            const osc = audioCtx.createOscillator();
+            const g   = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, time);
+            g.gain.setValueAtTime(vol, time);
+            g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(time); osc.stop(time + dur + 0.01);
+        } catch(e) {}
+    }
+
+    function scheduleKick(time) {
+        if (!audioCtx) return;
+        try {
+            const osc = audioCtx.createOscillator();
+            const g   = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(110, time);
+            osc.frequency.exponentialRampToValueAtTime(38, time + 0.1);
+            g.gain.setValueAtTime(0.45, time);
+            g.gain.exponentialRampToValueAtTime(0.0001, time + 0.18);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(time); osc.stop(time + 0.22);
+        } catch(e) {}
+    }
+
+    function scheduleHat(time, vol) {
+        if (!audioCtx) return;
+        try {
+            const buf  = audioCtx.createBuffer(1, Math.ceil(audioCtx.sampleRate * 0.04), audioCtx.sampleRate);
+            const data = buf.getChannelData(0);
+            for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+            const src = audioCtx.createBufferSource();
+            const hpf = audioCtx.createBiquadFilter();
+            const g   = audioCtx.createGain();
+            hpf.type = 'highpass'; hpf.frequency.value = 7500;
+            src.buffer = buf;
+            src.connect(hpf); hpf.connect(g); g.connect(audioCtx.destination);
+            g.gain.setValueAtTime(vol, time);
+            g.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
+            src.start(time);
+        } catch(e) {}
+    }
+
+    function scheduleSnare(time) {
+        scheduleHat(time, 0.18);
+        scheduleOsc(185, 'square', time, 0.07, 0.09);
+    }
+
+    function playJingle() {
+        if (!soundEnabled || !audioCtx || !gameActive || isLevelingUp) return;
+        const isRush  = activePowerup === 'rush';
+        const bpm     = isRush ? 172 : 148;
+        const stepDur = 60 / bpm / 4; // sixteenth-note duration in seconds
+        const lead    = isRush ? SEQ_LEAD_RUSH : SEQ_LEAD;
+        const bass    = isRush ? SEQ_BASS_RUSH : SEQ_BASS;
+
+        while (musicNextTime < audioCtx.currentTime + SCHED_AHEAD) {
+            const s = musicStep % 16;
+            const t = musicNextTime;
+
+            // Lead melody
+            if (lead[s] > 0) {
+                scheduleOsc(lead[s], isRush ? 'sawtooth' : 'square', t, stepDur * 0.65, isRush ? 0.075 : 0.06);
+                if (isRush) scheduleOsc(lead[s] * 1.5, 'square', t, stepDur * 0.45, 0.025); // 5th harmony
+            }
+            // Bass (every other step so it pulses, not buzzes)
+            if (s % 2 === 0 && bass[s] > 0) {
+                scheduleOsc(bass[s], 'triangle', t, stepDur * 1.7, 0.1);
+            }
+            // Percussion
+            if (KICK_STEPS.has(s))  scheduleKick(t);
+            if (SNARE_STEPS.has(s)) scheduleSnare(t);
+            else if (HAT_STEPS.has(s)) scheduleHat(t, 0.05);
+
+            musicStep++;
+            musicNextTime += stepDur;
+        }
+    }
+
+    // One-shot sound effects (unchanged API so rest of game still works)
+    function playSound(freq, type = 'sine', duration = 0.1, vol = 0.1) {
+        if (!soundEnabled || !audioCtx) return;
+        scheduleOsc(freq, type, audioCtx.currentTime, duration, vol);
+    }
+
+    function toggleSound() {
+        initAudio();
+        soundEnabled = !soundEnabled;
+        localStorage.setItem('fizzFallSound', soundEnabled);
+        document.getElementById('sound-toggle').innerText = soundEnabled ? '🔊' : '🔇';
+        if (soundEnabled) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            musicNextTime = audioCtx.currentTime;
+            musicStep = 0;
+        }
+    }
+
+    function resize() {
+        const container = document.getElementById('game-container');
+        const adHeight = document.getElementById('coach-bar').offsetHeight;
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight - adHeight;
+        player.x = canvas.width / 2;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- CHANGE 1: Keyboard — track held state; handle Enter/Space inline ---
+    window.addEventListener('keydown', (e) => {
+        keys[e.code] = true;
+        if (e.code === 'Enter') {
+            if (!gameActive && !isLevelingUp && !isGameOver) startGame();
+            else if (isLevelingUp) nextLevel();
+            else if (isGameOver) resetGame();
+            e.preventDefault();
+        }
+        if (e.code === 'Space') {
+            toggleSound();
+            e.preventDefault();
+        }
+        // Prevent arrow keys from scrolling the page
+        if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code)) {
+            e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+    // --- CHANGE 1: Touch drag — finger must be on/near the bubble to grab it ---
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (!gameActive) return;
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const tx = (touch.clientX - rect.left) * scaleX;
+        const ty = (touch.clientY - rect.top) * scaleY;
+        const dx = tx - player.x;
+        const dy = ty - player.y;
+        // Generous grab radius — 3x the bubble radius for easy tap targeting
+        if (Math.sqrt(dx * dx + dy * dy) < player.radius * 3) {
+            isDragging = true;
+            player.vx = 0;
+            player.vy = 0;
+        }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (!isDragging || !gameActive || freezeFrames > 0) return;
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        // Bubble follows the finger exactly; clamp to canvas bounds
+        player.x = Math.max(player.radius, Math.min(canvas.width  - player.radius, (touch.clientX - rect.left) * scaleX));
+        player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, (touch.clientY - rect.top)  * scaleY));
+        player.vx = 0;
+        player.vy = 0;
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => { isDragging = false; });
+
+    // (unchanged) Soda bottle drawing
+    function drawSodaBottle(ctx, x, y, radius, type, rotation, frame) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rotation);
+        const scale = (radius / 18) * 1.1;
+        const w = 24 * scale;
+        const h = 58 * scale;
+        let liquid = '#3d1f00';
+        if (type === 'rush') liquid = '#ff8c00';
+        if (type === 'mentos') liquid = '#c0ff00';
+        ctx.beginPath();
+        ctx.moveTo(-w/5, -h/2);
+        ctx.lineTo(w/5, -h/2);
+        ctx.lineTo(w/5, -h/3);
+        ctx.bezierCurveTo(w/2, -h/4, w/2.2, -h/8, w/3, 0);
+        ctx.bezierCurveTo(w/4, h/8, w/4, h/4, w/2.2, h/2.5);
+        ctx.lineTo(w/2.5, h/2);
+        ctx.lineTo(-w/2.5, h/2);
+        ctx.lineTo(-w/2.2, h/2.5);
+        ctx.bezierCurveTo(-w/4, h/4, -w/4, h/8, -w/3, 0);
+        ctx.bezierCurveTo(-w/2.2, -h/8, -w/2, -h/4, -w/5, -h/3);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.save();
+        ctx.clip();
+        ctx.fillStyle = liquid;
+        ctx.fillRect(-w, -h/4.5, w*2, h);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        for(let i=0; i<4; i++) {
+            const bx = Math.sin(frame * 0.05 + i) * (w/4);
+            const by = (frame*1.5 + i*20) % (h*0.7) - (h*0.3);
+            ctx.beginPath();
+            ctx.arc(bx, -by, 1.5, 0, Math.PI*2);
+            ctx.fill();
+        }
+        ctx.restore();
+        ctx.fillStyle = '#cc0000';
+        ctx.fillRect(-w/4.5, -h/2 - 2, w/2.2, 4);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillRect(-w/2.5, -h/10, w*0.8, h/6);
+        ctx.fillStyle = '#cc0000';
+        ctx.font = `bold ${7 * scale}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.fillText(type.toUpperCase().substring(0,3), 0, 3);
+        const isSpraying = Math.sin(frame * 0.15) > 0.4;
+        if (isSpraying) {
+            ctx.fillStyle = 'white';
+            for(let i=0; i<6; i++) {
+                const spread = (Math.random() - 0.5) * 22;
+                const rise = -h/2 - 4 - (Math.random() * 25);
+                ctx.beginPath();
+                ctx.arc(spread, rise, 1 + Math.random()*2, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+        ctx.restore();
+        return isSpraying;
+    }
+
+    // (unchanged) Powerup application
+    function applyPowerup(type) {
+        if (type === 'mentos') {
+            obstacles = [];
+            activePowerup = null;
+            powerupUI.style.display = 'none';
+            playSound(1200, 'sine', 0.3, 0.15);
+        } else {
+            // Rush duration: 15s at level 1 (900 dt-units), shrinks 15% per level
+            activePowerup = type;
+            powerupTime = Math.round(900 * Math.pow(0.85, level - 1));
+            powerupUI.style.display = 'block';
+            powerupUI.innerText = type === 'shield' ? "COLA SHIELD!" :
+                                 type === 'rush' ? "ORANGE RUSH!" : "GREEN DEW!";
+            // Rush: flash a center-screen teaching banner so the player knows to smash ice
+            if (type === 'rush') {
+                floatingTexts.push({ x: null, y: null, text: 'SMASH THE ICE!  +5', life: 110, center: true, big: true });
+            }
+            playSound(800, 'sine', 0.2, 0.15);
+        }
+    }
+
+    // (unchanged) Freeze / hit logic
+    function triggerFreeze() {
+        if (invulFrames > 0 || activePowerup === 'shield' || activePowerup === 'rush') {
+            if (activePowerup === 'shield') {
+                activePowerup = null;
+                powerupTime = 0;
+                powerupUI.style.display = 'none';
+                invulFrames = 60;
+                playSound(800, 'sine', 0.2, 0.15);
+            }
+            return;
+        }
+        iceHits++;
+        if (iceHits >= 3) {
+            gameActive = false;
+            isGameOver = true;
+            document.getElementById('game-over-screen').style.display = 'flex';
+            document.getElementById('finalScore').innerText = score;
+            playSound(100, 'sawtooth', 0.4, 0.2);
+            return;
+        }
+        freezeFrames = 120;
+        invulFrames = 180;
+        frozenAlert.style.display = 'block';
+        if (iceHits === 1) hit1.classList.add('cracked');
+        if (iceHits === 2) hit2.classList.add('cracked');
+        playSound(150, 'sawtooth', 0.2, 0.15);
+    }
+
+    // (unchanged) Spawn logic
+    function spawnEntity() {
+        const isSafePhase = (frameCount % 600) < 120;
+        if (Math.random() < 0.1) {
+            powerups.push({
+                type: ['shield', 'rush', 'mentos'][Math.floor(Math.random()*3)],
+                x: Math.random() * (canvas.width-40)+20,
+                y: canvas.height + 50,
+                rotation: Math.random() * Math.PI,
+                spin: (Math.random() - 0.5) * 0.04,
+                radius: 18
+            });
+        } else {
+            const size = 35 + Math.random()*45;
+            obstacles.push({
+                x: Math.random()*(canvas.width-size),
+                y: isSafePhase ? canvas.height + 250 : canvas.height + 50,
+                w: size, h: size,
+                rotation: Math.random() * Math.PI,
+                spin: (Math.random() - 0.5) * 0.05
+            });
+        }
+    }
+
+    function startGame() {
+        initAudio();
+        gameActive = true; isLevelingUp = false; isGameOver = false;
+        score = 0; level = 1; iceHits = 0;
+        freezeFrames = 0; invulFrames = 90; frameCount = 0; // 90 dt-units = 1.5s grace period
+        obstacles = []; powerups = []; floatingTexts = []; bottlecaps = [];
+        bottlecapSpawnAccum = 0;
+        bottlecapIntroShown = false;
+        activePowerup = null; powerupTime = 0; scoreToNextLevel = 50;
+        // Rush bottle appears at a random moment within the first 5 seconds (60–300 dt-units)
+        rushIntroSpawned = false;
+        rushIntroDelay = 60 + Math.random() * 240;
+        rushWarnLastTick = 0;
+        lastTimestamp = null;
+        // --- CHANGE 1: reset player fully including vy ---
+        player.x = canvas.width / 2;
+        player.y = canvas.height * 0.2;
+        player.vx = 0;
+        player.vy = 0;
+        hit1.classList.remove('cracked'); hit2.classList.remove('cracked');
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('game-over-screen').style.display = 'none';
+        document.getElementById('level-screen').style.display = 'none';
+        frozenAlert.style.display = 'none';
+        powerupUI.style.display = 'none';
+        scoreElement.innerText = "0";
+        levelElement.innerText = "1";
+        if (soundEnabled && audioCtx) { musicNextTime = audioCtx.currentTime; musicStep = 0; }
+    }
+
+    function resetGame() { startGame(); }
+
+    function nextLevel() {
+        level++;
+        isLevelingUp = false;
+        scoreToNextLevel = score + 50;
+        levelElement.innerText = level;
+        document.getElementById('level-screen').style.display = 'none';
+        gameActive = true;
+        bottlecapSpawnAccum = 0;
+        invulFrames = 90; // 1.5s immunity at level start
+        lastTimestamp = null;
+        spawnAccum = 0;
+        rushWarnLastTick = 0;
+        playSound(523, 'sine', 0.2, 0.15);
+        if (soundEnabled && audioCtx) { musicNextTime = audioCtx.currentTime; musicStep = 0; }
+    }
+
+    // --- CHANGE 2: update now receives dt (normalized to 60fps = 1.0) ---
+    function update(dt) {
+        if (!gameActive) return;
+
+        // Advance frameCount in real-time units (still usable for sin/mod effects)
+        frameCount += dt;
+        playJingle();
+
+        // Level 1 guaranteed rush bottle — drops in at a random moment in the first 5 seconds
+        if (level === 1 && !rushIntroSpawned) {
+            rushIntroDelay -= dt;
+            if (rushIntroDelay <= 0) {
+                rushIntroSpawned = true;
+                powerups.push({
+                    type: 'rush',
+                    x: (0.2 + Math.random() * 0.6) * canvas.width, // random horizontal position
+                    y: canvas.height + 50,
+                    rotation: Math.random() * Math.PI,
+                    spin: (Math.random() - 0.5) * 0.04,
+                    radius: 18
+                });
+            }
+        }
+
+        // Tick timers proportionally to real elapsed time
+        if (freezeFrames > 0) {
+            freezeFrames = Math.max(0, freezeFrames - dt);
+            if (freezeFrames === 0) frozenAlert.style.display = 'none';
+        }
+        if (invulFrames > 0) invulFrames = Math.max(0, invulFrames - dt);
+        if (powerupTime > 0) {
+            powerupTime = Math.max(0, powerupTime - dt);
+            // Rush warning: fire a sharp click each second during the last 3 seconds (180 dt-units)
+            if (activePowerup === 'rush' && powerupTime > 0 && powerupTime <= 180) {
+                const secondsLeft = Math.ceil(powerupTime / 60);
+                if (secondsLeft !== rushWarnLastTick) {
+                    rushWarnLastTick = secondsLeft;
+                    playSound(1100, 'square', 0.06, 0.12);
+                }
+            }
+            if (powerupTime === 0) {
+                activePowerup = null;
+                powerupUI.style.display = 'none';
+                powerupUI.style.opacity = '1';
+                rushWarnLastTick = 0;
+            } else if (activePowerup === 'rush' && powerupTime <= 180) {
+                // Flash the label in sync with the border strobe
+                powerupUI.style.opacity = Math.floor(frameCount / 18) % 2 === 0 ? '1' : '0';
+                powerupUI.innerText = `ORANGE RUSH — ${Math.ceil(powerupTime / 60)}s`;
+            } else if (activePowerup === 'rush') {
+                powerupUI.style.opacity = '1';
+                powerupUI.innerText = 'ORANGE RUSH!';
+            }
+        }
+
+        // --- CHANGE 1: Apply held arrow-key acceleration (2D) ---
+        if (freezeFrames <= 0 && !isDragging) {
+            // Rush powerup gives a speed boost
+            const moveForce = (activePowerup === 'rush' ? 1.0 : 0.6) * dt;
+            const maxSpeed  =  activePowerup === 'rush' ? 14 : 10;
+            if (keys['ArrowLeft'])  player.vx -= moveForce;
+            if (keys['ArrowRight']) player.vx += moveForce;
+            if (keys['ArrowUp'])    player.vy -= moveForce;
+            if (keys['ArrowDown'])  player.vy += moveForce;
+            player.vx = Math.max(-maxSpeed, Math.min(maxSpeed, player.vx));
+            player.vy = Math.max(-maxSpeed, Math.min(maxSpeed, player.vy));
+        }
+
+        // --- CHANGE 2: Position updated by dt so movement is frame-rate independent ---
+        if (freezeFrames <= 0 && !isDragging) {
+            player.x += player.vx * dt;
+            player.y += player.vy * dt;
+            // Apply friction scaled to dt so deceleration feels the same at any frame rate
+            const f = Math.pow(player.friction, dt);
+            player.vx *= f;
+            player.vy *= f;
+        }
+
+        // Clamp to canvas bounds (all 4 edges now that movement is 2D)
+        if (player.x < player.radius)               { player.x = player.radius;               player.vx *= -0.5; }
+        if (player.x > canvas.width - player.radius) { player.x = canvas.width - player.radius; player.vx *= -0.5; }
+        if (player.y < player.radius)               { player.y = player.radius;               player.vy *= -0.5; }
+        if (player.y > canvas.height - player.radius){ player.y = canvas.height - player.radius; player.vy *= -0.5; }
+
+        // Speed compounds 15% per level; level 1 = 3.5 base
+        const speed = 3.5 * Math.pow(1.15, level - 1) * dt;
+
+        // Spawn interval tightens 12% per level so the board fills faster at high levels
+        spawnAccum += dt;
+        const spawnInterval = Math.max(8, 45 * Math.pow(0.88, level - 1));
+        if (spawnAccum >= spawnInterval) {
+            spawnAccum -= spawnInterval;
+            spawnEntity();
+            score++;
+            scoreElement.innerText = score;
+        }
+
+        if (score >= scoreToNextLevel) {
+            gameActive = false;
+            isLevelingUp = true;
+            document.getElementById('level-screen').style.display = 'flex';
+            document.getElementById('badge-area').innerHTML = `<h1 style="font-size:80px;">${level+1}</h1>`;
+        }
+
+        for (let i = powerups.length-1; i>=0; i--) {
+            let p = powerups[i];
+            p.y -= speed;
+            p.rotation += p.spin * dt;
+            const dx = player.x - p.x, dy = player.y - p.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            const isSpraying = Math.sin(frameCount * 0.15) > 0.4;
+            const inSpray = isSpraying && Math.abs(dx) < 35 && (p.y - player.y) < 85 && (p.y - player.y) > 0;
+            if (dist < player.radius + 20 || inSpray) {
+                applyPowerup(p.type);
+                powerups.splice(i, 1);
+            } else if (p.y < -100) powerups.splice(i, 1);
+        }
+
+        for (let i = obstacles.length-1; i>=0; i--) {
+            let o = obstacles[i];
+            o.y -= speed;
+            o.rotation += o.spin * dt;
+            const dx = player.x - (o.x + o.w/2);
+            const dy = player.y - (o.y + o.h/2);
+            const hitDist = player.radius + (o.w * 0.42);
+            if (Math.sqrt(dx*dx + dy*dy) < hitDist) {
+                if (activePowerup === 'rush') {
+                    // Smash the ice cube for bonus points
+                    score += 5;
+                    scoreElement.innerText = score;
+                    floatingTexts.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, text: '+5', life: 55, center: false, big: false });
+                    playSound(600 + Math.random() * 300, 'triangle', 0.12, 0.12);
+                } else {
+                    triggerFreeze();
+                }
+                obstacles.splice(i, 1);
+            } else if (o.y < -100) obstacles.splice(i, 1);
+        }
+
+        // ===== BOTTLECAP SYSTEM (level 7+) =====
+        if (level >= 7) {
+            // How many bottlecaps can be on screen: 1 at L7, +1 every 2 levels, max 4
+            const maxCaps = Math.min(4, Math.floor((level - 7) / 2) + 1);
+            // Spawn interval shrinks with level
+            const capInterval = Math.max(220, 600 - (level - 7) * 55);
+            bottlecapSpawnAccum += dt;
+            if (bottlecapSpawnAccum >= capInterval && bottlecaps.length < maxCaps) {
+                bottlecapSpawnAccum = 0;
+                const fromLeft = Math.random() < 0.5;
+                const r = 22;
+                const spd = (2.2 + Math.random() * 1.5) * Math.pow(1.08, level - 7);
+                bottlecaps.push({
+                    x: fromLeft ? -r - 10 : canvas.width + r + 10,
+                    y: 90 + Math.random() * (canvas.height - 180),
+                    r, vx: fromLeft ? spd : -spd,
+                    rotation: 0,
+                    fromLeft
+                });
+            }
+
+            for (let i = bottlecaps.length - 1; i >= 0; i--) {
+                const c = bottlecaps[i];
+                c.x += c.vx * dt;
+                c.rotation += 0.05 * dt * (c.fromLeft ? 1 : -1);
+                // Remove when off-screen
+                if (c.x < -80 || c.x > canvas.width + 80) {
+                    bottlecaps.splice(i, 1);
+                    continue;
+                }
+                // Collision with player
+                const dx = player.x - c.x, dy = player.y - c.y;
+                if (Math.sqrt(dx*dx + dy*dy) < player.radius + c.r - 4) {
+                    triggerFreeze();
+                    bottlecaps.splice(i, 1);
+                }
+            }
+        }
+    }
+
+    // --- CHANGE 2: draw() now receives a timestamp from requestAnimationFrame ---
+    function draw(timestamp) {
+        // First frame: initialise timing reference
+        if (lastTimestamp === null) lastTimestamp = timestamp;
+
+        // dt = how many "60fps frames" worth of time have elapsed
+        // Capped at 3 to prevent huge jumps after tab switches / pauses
+        const rawDt = (timestamp - lastTimestamp) / (1000 / 60);
+        const dt = Math.min(rawDt, 3);
+        lastTimestamp = timestamp;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Orange border during rush — smooth pulse normally, rapid strobe in last 3s
+        if (activePowerup === 'rush') {
+            const isWarning = powerupTime <= 180;
+            let borderAlpha;
+            if (isWarning) {
+                // Hard on/off strobe: flips every 18 dt-units (~3 per second)
+                borderAlpha = Math.floor(frameCount / 18) % 2 === 0 ? 0.85 : 0.0;
+            } else {
+                borderAlpha = 0.35 + 0.3 * Math.sin(frameCount * 0.14);
+            }
+            if (borderAlpha > 0) {
+                ctx.save();
+                ctx.strokeStyle = isWarning
+                    ? `rgba(255, 50, 0, ${borderAlpha})`   // red-orange when warning
+                    : `rgba(255, 140, 0, ${borderAlpha})`;  // normal orange
+                ctx.lineWidth = isWarning ? 22 : 16;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+        }
+
+        // Draw obstacles
+        obstacles.forEach(o => {
+            ctx.save();
+            ctx.translate(o.x + o.w/2, o.y + o.h/2);
+            ctx.rotate(o.rotation);
+            const iceGrad = ctx.createLinearGradient(-o.w/2, -o.h/2, o.w/2, o.h/2);
+            iceGrad.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+            iceGrad.addColorStop(0.5, 'rgba(165, 243, 252, 0.6)');
+            iceGrad.addColorStop(1, 'rgba(100, 210, 255, 0.7)');
+            ctx.fillStyle = iceGrad;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(-o.w/2, -o.h/2, o.w, o.h, 6);
+            ctx.fill();
+            ctx.stroke();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-o.w/2 + 5, -o.h/2 + 8);
+            ctx.lineTo(o.w/2 - 8, -o.h/2 + 5);
+            ctx.stroke();
+            ctx.restore();
+
+            // During rush: golden spinning target ring turns ice into a prize
+            if (activePowerup === 'rush') {
+                ctx.save();
+                ctx.translate(o.x + o.w/2, o.y + o.h/2);
+                const pulse = 0.5 + 0.5 * Math.sin(frameCount * 0.22);
+                ctx.strokeStyle = `rgba(255, 200, 0, ${0.7 + 0.3 * pulse})`;
+                ctx.lineWidth = 2.5;
+                ctx.setLineDash([7, 4]);
+                ctx.lineDashOffset = -frameCount * 0.35;
+                ctx.beginPath();
+                ctx.arc(0, 0, o.w * 0.68, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                // Inner crosshair dot
+                ctx.fillStyle = `rgba(255, 220, 0, ${0.6 + 0.4 * pulse})`;
+                ctx.beginPath();
+                ctx.arc(0, 0, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        });
+
+        // Draw powerup bottles
+        powerups.forEach(p => drawSodaBottle(ctx, p.x, p.y, p.radius, p.type, p.rotation, frameCount));
+
+        // ===== DRAW BOTTLECAPS =====
+        bottlecaps.forEach(c => {
+            ctx.save();
+            ctx.translate(c.x, c.y);
+            ctx.rotate(c.rotation);
+
+            // Outer chrome ring with corrugated crown edge
+            const numTeeth = 18;
+            const innerR = c.r - 4;
+            ctx.beginPath();
+            for (let i = 0; i < numTeeth * 2; i++) {
+                const angle = (i / (numTeeth * 2)) * Math.PI * 2;
+                const r = i % 2 === 0 ? c.r : c.r - 5;
+                const px = Math.cos(angle) * r, py = Math.sin(angle) * r;
+                i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            const chromGrad = ctx.createRadialGradient(-4, -4, 2, 0, 0, c.r);
+            chromGrad.addColorStop(0, '#ffffff');
+            chromGrad.addColorStop(0.3, '#d0d8e0');
+            chromGrad.addColorStop(0.7, '#8a9bb0');
+            chromGrad.addColorStop(1, '#4a5568');
+            ctx.fillStyle = chromGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            // Inner disc — red/orange game brand color
+            ctx.beginPath();
+            ctx.arc(0, 0, innerR, 0, Math.PI * 2);
+            const capGrad = ctx.createRadialGradient(-3, -3, 1, 0, 0, innerR);
+            capGrad.addColorStop(0, '#ff6b35');
+            capGrad.addColorStop(0.5, '#e65100');
+            capGrad.addColorStop(1, '#bf360c');
+            ctx.fillStyle = capGrad;
+            ctx.fill();
+
+            // "BRO" label
+            ctx.fillStyle = 'rgba(255,255,255,0.92)';
+            ctx.font = `bold ${Math.round(c.r * 0.42)}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('BRO', 0, 0);
+
+            ctx.restore();
+        });
+
+        // Draw player bubble (flashes during invulnerability)
+        if (invulFrames === 0 || Math.floor(frameCount / 5) % 2 === 0) {
+            // Rush: pulsing flame aura drawn behind the bubble
+            if (activePowerup === 'rush') {
+                const pulse = Math.sin(frameCount * 0.2);
+                const auraR = player.radius + 10 + pulse * 5;
+                const auraGrad = ctx.createRadialGradient(player.x, player.y, player.radius - 2, player.x, player.y, auraR + 8);
+                auraGrad.addColorStop(0, 'rgba(255, 200, 0, 0.75)');
+                auraGrad.addColorStop(0.5, 'rgba(255, 100, 0, 0.4)');
+                auraGrad.addColorStop(1, 'rgba(255, 60, 0, 0)');
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, auraR + 8, 0, Math.PI * 2);
+                ctx.fillStyle = auraGrad;
+                ctx.fill();
+            }
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            let color = '#ff9800';
+            if (freezeFrames > 0) color = '#00e5ff';
+            else if (activePowerup === 'rush') color = '#ffeb3b';
+            const grad = ctx.createRadialGradient(player.x-5, player.y-5, 2, player.x, player.y, player.radius);
+            grad.addColorStop(0, 'white');
+            grad.addColorStop(0.4, color);
+            grad.addColorStop(1, '#e65100');
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(player.x - 6, player.y - 6, 4, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fill();
+            if (activePowerup === 'shield') {
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.radius + 10, 0, Math.PI * 2);
+                ctx.strokeStyle = '#3d1f00';
+                ctx.setLineDash([5, 5]);
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        update(dt);
+
+        // Floating texts: +5 hits and the rush activation banner
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+            const t = floatingTexts[i];
+            t.life -= dt;
+            if (t.life <= 0) { floatingTexts.splice(i, 1); continue; }
+            const alpha = Math.min(1, t.life / 30);
+            ctx.save();
+            if (t.center) {
+                // Big centered activation banner — fades in then out
+                const maxLife = 110;
+                const fadeIn  = Math.min(1, (maxLife - t.life) / 15);
+                const fadeOut = Math.min(1, t.life / 25);
+                ctx.globalAlpha = Math.min(fadeIn, fadeOut);
+                ctx.font = 'bold 28px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#fff700';
+                ctx.shadowColor = '#ff6600';
+                ctx.shadowBlur = 18;
+                ctx.fillText(t.text, canvas.width / 2, canvas.height / 2 - 30);
+            } else {
+                // +5 floating upward from hit position
+                const elapsed = 55 - t.life;
+                ctx.globalAlpha = alpha;
+                ctx.font = 'bold 22px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#ffdd00';
+                ctx.shadowColor = '#ff6600';
+                ctx.shadowBlur = 10;
+                ctx.fillText(t.text, t.x, t.y - elapsed * 0.9);
+            }
+            ctx.restore();
+        }
+
+        updateCoachBar();
+
+        requestAnimationFrame(draw);
+    }
+
+    // ===== COACH BAR =====
+    // Drives the bottom instruction banner. Highest-priority state wins.
+    let lastCoachMood = '';
+    function updateCoachBar() {
+        let text, mood;
+
+        if (isGameOver) {
+            text = '💥 CRACKED! — Tap REPLAY';
+            mood = 'danger';
+        } else if (isLevelingUp) {
+            text = '✅ LEVEL CLEARED — Nice run!';
+            mood = 'good';
+        } else if (!gameActive) {
+            text = '🥤 Press START to play';
+            mood = 'idle';
+        } else if (freezeFrames > 0) {
+            text = '🥶 FROZEN — shake it off!';
+            mood = 'danger';
+        } else if (bottlecaps.length > 0) {
+            // Bottlecap threat — warned here instead of on the play field
+            text = bottlecaps.length > 1
+                ? '🔴 BOTTLECAPS INCOMING — DODGE!'
+                : '🔴 BOTTLECAP INCOMING — DODGE IT!';
+            mood = 'danger';
+        } else if (activePowerup === 'rush' && powerupTime > 0 && powerupTime <= 180) {
+            text = `⏰ CRUSH TIME ENDING — ${Math.ceil(powerupTime / 60)}s!`;
+            mood = 'warn';
+        } else if (activePowerup === 'rush') {
+            text = '🧊 CRUSH THE ICE! — +5 each';
+            mood = 'rush';
+        } else if (powerups.length > 0) {
+            text = '🍾 GET THE BOTTLE!';
+            mood = 'good';
+        } else {
+            text = '❄️ AVOID THE ICE';
+            mood = 'idle';
+        }
+
+        if (coachMessage.textContent !== text) coachMessage.textContent = text;
+        if (mood !== lastCoachMood) {
+            coachBar.className = 'mood-' + mood;
+            lastCoachMood = mood;
+        }
+    }
+
+    // Sync button icon with initial sound state (may differ from HTML default if localStorage set)
+    document.getElementById('sound-toggle').innerText = soundEnabled ? '🔊' : '🔇';
+
+    updateCoachBar();
+
+    // Kick off the loop — pass timestamp via rAF (not a direct call)
+    requestAnimationFrame(draw);
+</script>
 </body>
 </html>

@@ -1722,7 +1722,7 @@
             ctx.restore();
         });
 
-        // ── Draw SodaBro character ──────────────────────────────────────────
+        // ── Draw SodaBro character (with baseball cap) ──────────────────────
         if (invulFrames === 0 || Math.floor(frameCount / 5) % 2 === 0) {
             const px = player.x, py = player.y, r = player.radius;
             const frozen   = freezeFrames > 0;
@@ -1745,11 +1745,11 @@
 
             ctx.save();
 
-            // Body — colour shifts with game state
+            // ── 1  Body ─────────────────────────────────────────────────────
             const bTop  = frozen ? '#9ae8ff' : rushing ? '#ffe57a' : '#ffcc80';
             const bMid  = frozen ? '#00e5ff' : rushing ? '#ffeb3b' : '#ff9800';
             const bEdge = frozen ? '#0288d1' : rushing ? '#ff8f00' : '#e65100';
-            const grad  = ctx.createRadialGradient(px - r*0.28, py - r*0.3, r*0.08, px, py, r);
+            const grad  = ctx.createRadialGradient(px - r*0.28, py - r*0.30, r*0.08, px, py, r);
             grad.addColorStop(0,    '#ffffff');
             grad.addColorStop(0.22, bTop);
             grad.addColorStop(0.62, bMid);
@@ -1759,77 +1759,121 @@
             ctx.fillStyle = grad;
             ctx.fill();
 
-            // Rosy cheeks
+            // ── 2  Baseball cap (worn slightly sideways — teen style) ────────
+            const capCX  = px + r * 0.08;      // slight rightward shift
+            const capBY  = py - r * 0.44;      // cap band sits just above eyebrows
+            const capDR  = r * 0.84;           // dome radius
+            const capCol = frozen ? '#1a3055' : rushing ? '#3a1500' : '#1e1e3f';
+            const brimC  = frozen ? '#0f1e38' : rushing ? '#220c00' : '#111128';
+
+            // Brim first (rendered behind dome) — extends to the right
+            ctx.save();
+            ctx.translate(capCX + capDR * 0.52, capBY);
+            ctx.rotate(-0.13);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, capDR * 0.82, r * 0.16, 0, 0, Math.PI * 2);
+            ctx.fillStyle = brimC;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+            ctx.lineWidth = 0.7;
+            ctx.stroke();
+            ctx.restore();
+
+            // Cap dome (D-shape: top-half arc + flat bottom)
+            ctx.beginPath();
+            ctx.arc(capCX, capBY, capDR, Math.PI, 0);   // clockwise → top half
+            ctx.lineTo(capCX - capDR, capBY);
+            ctx.closePath();
+            ctx.fillStyle = capCol;
+            ctx.fill();
+
+            // Front panel centre seam
+            ctx.strokeStyle = 'rgba(255,255,255,0.13)';
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(capCX + r*0.04, capBY);
+            ctx.lineTo(capCX + r*0.07, capBY - capDR * 0.95);
+            ctx.stroke();
+
+            // Small logo circle on front panel
+            ctx.beginPath();
+            ctx.arc(capCX + r*0.22, capBY - r*0.40, r * 0.115, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255,255,255,0.30)';
+            ctx.lineWidth = 0.9;
+            ctx.stroke();
+
+            // Button on top of cap
+            ctx.beginPath();
+            ctx.arc(capCX + r*0.07, capBY - capDR * 0.96, r * 0.10, 0, Math.PI * 2);
+            ctx.fillStyle = brimC;
+            ctx.fill();
+
+            // ── 3  Rosy cheeks ───────────────────────────────────────────────
             ctx.fillStyle = frozen ? 'rgba(130,215,255,0.42)' : 'rgba(255,95,75,0.30)';
             ctx.beginPath(); ctx.ellipse(px - r*0.48, py + r*0.22, r*0.22, r*0.13, -0.2, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.ellipse(px + r*0.48, py + r*0.22, r*0.22, r*0.13,  0.2, 0, Math.PI*2); ctx.fill();
 
-            // Eyes
+            // ── 4  Eyes ──────────────────────────────────────────────────────
             const eY  = py - r * 0.06;
             const eOX = r * 0.30;
-            const eR  = rushing ? r * 0.22 : r * 0.19;   // wider when excited
+            const eR  = rushing ? r * 0.22 : r * 0.19;
             ctx.fillStyle = 'white';
             ctx.beginPath(); ctx.arc(px - eOX, eY, eR, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(px + eOX, eY, eR, 0, Math.PI*2); ctx.fill();
 
-            // Pupils (slightly forward-looking)
-            const pR  = eR * 0.52;
+            const pR = eR * 0.52;
             ctx.fillStyle = frozen ? '#003d60' : '#1a0800';
             ctx.beginPath(); ctx.arc(px - eOX + pR*0.38, eY + pR*0.28, pR, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(px + eOX + pR*0.38, eY + pR*0.28, pR, 0, Math.PI*2); ctx.fill();
 
-            // Eye shine
             const sR = pR * 0.52;
             ctx.fillStyle = 'rgba(255,255,255,0.9)';
             ctx.beginPath(); ctx.arc(px - eOX + pR*0.12, eY - pR*0.18, sR, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(px + eOX + pR*0.12, eY - pR*0.18, sR, 0, Math.PI*2); ctx.fill();
 
-            // Eyebrows — express game state
+            // ── 5  Eyebrows ──────────────────────────────────────────────────
             ctx.lineWidth = Math.max(1, r * 0.11);
             ctx.lineCap   = 'round';
             ctx.strokeStyle = frozen ? '#004d75' : '#6b2d00';
             const bRow = eY - eR * 1.5;
             if (frozen) {
-                // Worried: inner corners raised (↘↙)
+                // Worried ↘↙
                 ctx.beginPath(); ctx.moveTo(px - eOX - eR*0.7, bRow + eR*0.35); ctx.lineTo(px - eOX + eR*0.7, bRow - eR*0.1); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(px + eOX + eR*0.7, bRow + eR*0.35); ctx.lineTo(px + eOX - eR*0.7, bRow - eR*0.1); ctx.stroke();
             } else if (rushing) {
-                // Fierce: outer corners raised (↗↖)
+                // Fierce ↗↖
                 ctx.beginPath(); ctx.moveTo(px - eOX - eR*0.7, bRow - eR*0.1); ctx.lineTo(px - eOX + eR*0.7, bRow + eR*0.35); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(px + eOX + eR*0.7, bRow - eR*0.1); ctx.lineTo(px + eOX - eR*0.7, bRow + eR*0.35); ctx.stroke();
             } else {
-                // Happy: gently raised
+                // Happy, gentle rise
                 ctx.beginPath(); ctx.moveTo(px - eOX - eR*0.7, bRow + eR*0.15); ctx.lineTo(px - eOX + eR*0.7, bRow - eR*0.1); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(px + eOX - eR*0.7, bRow - eR*0.1); ctx.lineTo(px + eOX + eR*0.7, bRow + eR*0.15); ctx.stroke();
             }
 
-            // Mouth
+            // ── 6  Mouth ─────────────────────────────────────────────────────
             ctx.lineWidth = Math.max(1, r * 0.10);
             ctx.lineCap   = 'round';
             const mCY = py + r * 0.32;
             const mR  = r * 0.30;
             if (frozen) {
-                // Frown — sad/scared
                 ctx.strokeStyle = '#004d75';
                 ctx.beginPath(); ctx.arc(px, mCY, mR, Math.PI, 0); ctx.stroke();
             } else if (rushing) {
-                // Big open excited grin (filled)
                 ctx.fillStyle = '#6b2d00';
                 ctx.beginPath(); ctx.arc(px, mCY - mR*0.18, mR, 0, Math.PI); ctx.fill();
             } else {
-                // Happy smile
                 ctx.strokeStyle = '#6b2d00';
                 ctx.beginPath(); ctx.arc(px, mCY - mR*0.55, mR, 0, Math.PI); ctx.stroke();
             }
 
-            // Fizz bubbles floating above (gently animated)
+            // ── 7  Fizz bubbles (float above the cap) ────────────────────────
             const fa = frameCount * 0.055;
             const fizz = [
-                { ox:  r*0.12, oy: r*1.26 + Math.sin(fa)       * 1.5, br: r*0.10 },
-                { ox: -r*0.27, oy: r*1.52 + Math.sin(fa + 1.1) * 1.8, br: r*0.07 },
-                { ox:  r*0.40, oy: r*1.70 + Math.sin(fa + 2.3) * 1.3, br: r*0.06 },
+                { ox:  r*0.10, oy: r*1.38 + Math.sin(fa)       * 1.5, br: r*0.10 },
+                { ox: -r*0.24, oy: r*1.62 + Math.sin(fa + 1.1) * 1.8, br: r*0.07 },
+                { ox:  r*0.36, oy: r*1.80 + Math.sin(fa + 2.3) * 1.3, br: r*0.06 },
             ];
-            ctx.strokeStyle = 'rgba(255,255,255,0.60)';
+            ctx.strokeStyle = 'rgba(255,255,255,0.65)';
             ctx.lineWidth = 1;
             for (const b of fizz) {
                 ctx.beginPath();

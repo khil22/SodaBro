@@ -72,51 +72,65 @@
             height: 100%;
         }
 
-        /* Coach / Instruction Banner (replaces old ad slot) */
+        /* Coach / Instruction Banner — arcade console strip */
         #coach-bar {
+            position: relative;
             width: 100%;
             height: 80px;
-            background: #fff3e0;
+            background: linear-gradient(180deg, #15172f 0%, #0a0b1a 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 50;
-            border-top: 3px solid var(--soda-orange);
             pointer-events: none;
             box-sizing: border-box;
-            padding: 0 14px;
-            transition: background 0.25s ease;
+            padding: 0 18px;
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+        /* Animated neon accent line across the top */
+        #coach-bar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--orange), var(--yellow), var(--pink), var(--teal), var(--orange));
+            background-size: 200% 100%;
+            animation: coachSheen 6s linear infinite;
+        }
+        @keyframes coachSheen {
+            0%   { background-position: 0% 0; }
+            100% { background-position: 200% 0; }
         }
 
         #coach-message {
-            font-weight: 800;
-            font-size: 21px;
-            letter-spacing: 0.4px;
-            line-height: 1.15;
+            font-family: 'Boogaloo', cursive;
+            font-size: 28px;
+            letter-spacing: 0.6px;
+            line-height: 1.05;
             text-align: center;
-            color: var(--soda-dark);
-            transition: color 0.2s ease;
+            color: #ffd9a8;
+            text-shadow: 0 0 12px rgba(255,170,90,0.5);
+        }
+        @keyframes coachPop {
+            0%   { transform: translateY(7px) scale(0.93); opacity: 0; }
+            55%  { transform: translateY(0)   scale(1.04); opacity: 1; }
+            100% { transform: translateY(0)   scale(1);    opacity: 1; }
         }
 
-        /* Mood states */
-        #coach-bar.mood-idle   { background: #fff3e0; }
-        #coach-bar.mood-idle   #coach-message { color: #5d4037; }
-        #coach-bar.mood-good   { background: #e8f5e9; }
-        #coach-bar.mood-good   #coach-message { color: #2e7d32; }
-        #coach-bar.mood-rush   { background: #fff3e0; }
-        #coach-bar.mood-rush   #coach-message { color: #e65100; }
-        #coach-bar.mood-warn   { background: #fff8e1; }
-        #coach-bar.mood-warn   #coach-message { color: #ef6c00; }
-        #coach-bar.mood-danger { background: #ffebee; }
-        #coach-bar.mood-danger #coach-message { color: #c62828; }
+        /* Mood states — neon text on the dark strip */
+        #coach-bar.mood-idle   #coach-message { color: #ffd9a8; text-shadow: 0 0 12px rgba(255,170,90,.5); }
+        #coach-bar.mood-good   #coach-message { color: #3df5d4; text-shadow: 0 0 14px rgba(0,240,200,.6); }
+        #coach-bar.mood-rush   #coach-message { color: #ffb02e; text-shadow: 0 0 16px rgba(255,150,20,.7); }
+        #coach-bar.mood-warn   #coach-message { color: #ffe234; text-shadow: 0 0 16px rgba(255,220,40,.7); }
+        #coach-bar.mood-danger #coach-message { color: #ff4d8d; text-shadow: 0 0 16px rgba(255,40,110,.75); }
 
-        #coach-bar.mood-warn   #coach-message,
-        #coach-bar.mood-danger #coach-message {
-            animation: coachPulse 0.55s ease-in-out infinite;
-        }
-        @keyframes coachPulse {
-            0%, 100% { transform: scale(1); }
-            50%      { transform: scale(1.09); }
+        #coach-bar.mood-rush   { background: linear-gradient(180deg, #20183a 0%, #0a0b1a 100%); }
+        #coach-bar.mood-warn   { background: linear-gradient(180deg, #25210f 0%, #0a0b1a 100%); animation: coachFlash 0.7s ease-in-out infinite; }
+        #coach-bar.mood-danger { background: linear-gradient(180deg, #2c1022 0%, #0a0b1a 100%); animation: coachFlash 0.55s ease-in-out infinite; }
+        @keyframes coachFlash {
+            0%, 100% { filter: brightness(1); }
+            50%      { filter: brightness(1.5); }
         }
 
         #ui-overlay {
@@ -179,21 +193,6 @@
             background: #ef4444;
         }
 
-        #frozen-alert {
-            position: absolute;
-            top: 40%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 64px;
-            font-weight: 900;
-            color: white;
-            text-shadow: 0 0 10px #00e5ff, 4px 4px 0px #0288d1;
-            display: none;
-            z-index: 30;
-            letter-spacing: 4px;
-            font-style: italic;
-        }
-
         #sound-toggle {
             position: absolute;
             top: 85px;
@@ -213,24 +212,62 @@
             z-index: 20;
         }
 
-        #game-over-screen, #level-screen {
+        #level-screen {
             position: absolute;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
-            height: calc(100% - 80px);
-            background: var(--theme-color);
+            height: 100%;
+            z-index: 100;
+            background: var(--dark);
+            color: var(--text);
+            font-family: 'Nunito', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: white;
-            z-index: 10;
+            overflow-y: auto;
+            overflow-x: hidden;
             pointer-events: auto;
-            padding: 20px;
-            box-sizing: border-box;
         }
+        #level-screen::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 20% 0%,   rgba(0,240,200,.22) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 80% 100%, rgba(255,107,53,.14) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 50% 50%,  rgba(255,226,52,.07) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        #level-screen .lv-content {
+            position: relative; z-index: 1;
+            width: 100%; max-width: 430px;
+            min-height: 100%; margin: auto;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 44px 24px; text-align: center;
+        }
+        .lv-title {
+            font-family: 'Boogaloo', cursive;
+            font-size: clamp(52px, 16vw, 72px);
+            line-height: 0.95;
+            background: linear-gradient(135deg, var(--teal) 0%, var(--yellow) 50%, var(--orange) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 22px rgba(0,240,200,.45));
+            animation: shimmer 4s ease-in-out infinite;
+        }
+        #badge-area h1 {
+            font-family: 'Boogaloo', cursive;
+            font-size: 96px;
+            line-height: 1;
+            color: var(--teal);
+            text-shadow: 0 0 32px rgba(0,240,200,.5);
+            margin: 14px 0 6px;
+        }
+        .lv-hint { font-size: 11px; color: var(--muted); margin-top: 14px; }
 
         button {
             padding: 15px 45px;
@@ -243,20 +280,6 @@
             font-weight: bold;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             margin-top: 20px;
-        }
-
-        .powerup-timer {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.6);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 15px;
-            font-size: 14px;
-            display: none;
-            z-index: 20;
         }
 
         .controls-hint {
@@ -297,23 +320,23 @@
             z-index: 0;
         }
 
-        /* Rising bubbles */
-        #start-screen .bubbles { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-        #start-screen .bub {
+        /* Rising bubbles (shared by splash + game-over screens) */
+        .bubbles { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        .bub {
             position: absolute; bottom: -50px; border-radius: 50%;
             border: 1.5px solid rgba(255,255,255,0.13);
             background: rgba(255,255,255,0.025);
             animation: rise linear infinite;
         }
-        #start-screen .bub:nth-child(1) { width:14px; height:14px; left:7%;  animation-duration:9s;  animation-delay:0s;   }
-        #start-screen .bub:nth-child(2) { width:8px;  height:8px;  left:22%; animation-duration:12s; animation-delay:2.5s; }
-        #start-screen .bub:nth-child(3) { width:22px; height:22px; left:38%; animation-duration:10s; animation-delay:4s;   }
-        #start-screen .bub:nth-child(4) { width:6px;  height:6px;  left:55%; animation-duration:14s; animation-delay:1s;   }
-        #start-screen .bub:nth-child(5) { width:18px; height:18px; left:70%; animation-duration:11s; animation-delay:3s;   }
-        #start-screen .bub:nth-child(6) { width:10px; height:10px; left:85%; animation-duration:8s;  animation-delay:5.5s; }
-        #start-screen .bub:nth-child(7) { width:26px; height:26px; left:3%;  animation-duration:13s; animation-delay:7s;   }
-        #start-screen .bub:nth-child(8) { width:7px;  height:7px;  left:48%; animation-duration:16s; animation-delay:0.5s; }
-        #start-screen .bub:nth-child(9) { width:12px; height:12px; left:93%; animation-duration:10s; animation-delay:2s;   }
+        .bub:nth-child(1) { width:14px; height:14px; left:7%;  animation-duration:9s;  animation-delay:0s;   }
+        .bub:nth-child(2) { width:8px;  height:8px;  left:22%; animation-duration:12s; animation-delay:2.5s; }
+        .bub:nth-child(3) { width:22px; height:22px; left:38%; animation-duration:10s; animation-delay:4s;   }
+        .bub:nth-child(4) { width:6px;  height:6px;  left:55%; animation-duration:14s; animation-delay:1s;   }
+        .bub:nth-child(5) { width:18px; height:18px; left:70%; animation-duration:11s; animation-delay:3s;   }
+        .bub:nth-child(6) { width:10px; height:10px; left:85%; animation-duration:8s;  animation-delay:5.5s; }
+        .bub:nth-child(7) { width:26px; height:26px; left:3%;  animation-duration:13s; animation-delay:7s;   }
+        .bub:nth-child(8) { width:7px;  height:7px;  left:48%; animation-duration:16s; animation-delay:0.5s; }
+        .bub:nth-child(9) { width:12px; height:12px; left:93%; animation-duration:10s; animation-delay:2s;   }
 
         @keyframes rise {
             0%   { transform: translateY(0) translateX(0);          opacity: 0; }
@@ -441,15 +464,268 @@
             from { opacity: 0; transform: translateY(22px); }
             to   { opacity: 1; transform: translateY(0); }
         }
+        /* ===================================================== */
+        /* ===== GAME OVER SCREEN (matches splash design) ======= */
+        /* ===================================================== */
+        #game-over-screen {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: var(--dark);
+            color: var(--text);
+            font-family: 'Nunito', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            overflow-x: hidden;
+            pointer-events: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        #game-over-screen::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 0%,   rgba(255,33,102,.24) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 85% 100%, rgba(0,240,200,.12)  0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 50% 50%,  rgba(255,107,53,.10) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        #game-over-screen .go-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 430px;
+            min-height: 100%;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 44px 24px;
+            text-align: center;
+        }
+        .go-title {
+            font-family: 'Boogaloo', cursive;
+            font-size: clamp(58px, 17vw, 78px);
+            line-height: 0.95;
+            background: linear-gradient(135deg, var(--yellow) 0%, var(--orange) 45%, var(--pink) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 26px rgba(255,33,102,.42));
+            animation: shimmer 5s ease-in-out infinite;
+        }
+        .go-sub { font-size: 14px; color: var(--muted); margin-top: 6px; }
+        .go-score-wrap { margin: 24px 0 6px; }
+        .go-score-label {
+            font-size: 11px; font-weight: 900;
+            letter-spacing: 4px; text-transform: uppercase;
+            color: var(--muted);
+        }
+        .go-score {
+            font-family: 'Boogaloo', cursive;
+            font-size: 86px; line-height: 1;
+            color: var(--teal);
+            text-shadow: 0 0 30px rgba(0,240,200,.45);
+        }
+        .go-hint { font-size: 11px; color: var(--muted); margin-top: 14px; }
+
+        /* Score submit row */
+        #score-submit {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        #initials-input {
+            width: 200px;
+            padding: 13px 12px;
+            font-size: 21px;
+            font-weight: 800;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Nunito', sans-serif;
+            border: 2px solid rgba(255,255,255,0.18);
+            border-radius: 14px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text);
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color .15s;
+        }
+        #initials-input:focus { border-color: var(--teal); }
+        #initials-input::placeholder { color: var(--muted); }
+        #submit-score-btn {
+            margin-top: 0;
+            padding: 13px 22px;
+            font-size: 18px;
+            font-family: 'Boogaloo', cursive;
+            letter-spacing: 1px;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--teal), #00b89a);
+            color: #04201b;
+            box-shadow: 0 4px 16px rgba(0,240,200,.25);
+        }
+        #submit-score-btn:disabled {
+            background: rgba(255,255,255,0.12);
+            color: var(--muted);
+            box-shadow: none;
+            cursor: default;
+        }
+        #submit-status {
+            margin-top: 12px;
+            font-size: 13px;
+            min-height: 18px;
+            color: var(--muted);
+        }
+        .go-btn-primary, .go-btn-ghost {
+            width: 100%;
+            max-width: 280px;
+            margin-top: 12px;
+            padding: 15px 0;
+            font-family: 'Boogaloo', cursive;
+            font-size: 23px;
+            letter-spacing: 1px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            transition: transform .12s, filter .12s;
+        }
+        .go-btn-primary {
+            background: linear-gradient(135deg, var(--orange), var(--pink));
+            color: #fff;
+            box-shadow: 0 6px 22px rgba(255,33,102,.32);
+        }
+        .go-btn-ghost {
+            background: transparent;
+            color: var(--text);
+            border: 2px solid rgba(255,255,255,0.16);
+            box-shadow: none;
+        }
+        .go-btn-primary:active, .go-btn-ghost:active { transform: scale(0.96); filter: brightness(0.92); }
+
+        /* ===================================================== */
+        /* ===== TOP SCORES / LEADERBOARD ======================= */
+        /* ===================================================== */
+
+        /* Leaderboard overlay */
+        #leaderboard-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 200;
+            background: var(--dark);
+            color: var(--text);
+            font-family: 'Nunito', sans-serif;
+            display: flex;
+            overflow-y: auto;
+            padding: 24px;
+            box-sizing: border-box;
+            pointer-events: auto;
+        }
+        .lb-panel {
+            margin: auto;
+            width: 100%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+        }
+        .lb-title {
+            font-family: 'Boogaloo', cursive;
+            font-size: 46px;
+            text-align: center;
+            margin-bottom: 18px;
+            background: linear-gradient(90deg, var(--orange), var(--yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .lb-list {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 8px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .lb-row {
+            display: flex;
+            align-items: center;
+            padding: 11px 14px;
+            border-radius: 10px;
+        }
+        .lb-row:nth-child(odd) { background: rgba(255,255,255,0.035); }
+        .lb-rank {
+            width: 40px;
+            font-weight: 900;
+            font-size: 17px;
+            color: var(--muted);
+        }
+        .lb-name {
+            flex: 1;
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: 1.5px;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .lb-score {
+            font-family: 'Boogaloo', cursive;
+            font-size: 26px;
+            color: var(--teal);
+        }
+        .lb-loading, .lb-empty {
+            margin: auto;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+            padding: 20px 12px;
+        }
+        .lb-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+        .lb-play, .lb-close {
+            flex: 1;
+            margin-top: 0;
+            padding: 15px 0;
+            font-family: 'Boogaloo', cursive;
+            font-size: 22px;
+            letter-spacing: 1px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+        }
+        .lb-play {
+            background: linear-gradient(135deg, var(--orange), var(--pink));
+            color: #fff;
+        }
+        .lb-close {
+            background: transparent;
+            color: var(--text);
+            border: 2px solid var(--border);
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
 
 <div id="game-container">
     <canvas id="gameCanvas"></canvas>
-    
-    <div id="frozen-alert">FROZEN</div>
-    
+
     <div id="ui-overlay">
         <div class="stats-row">
             <div style="display: flex; flex-direction: column; align-items: flex-start;">
@@ -463,7 +739,6 @@
         </div>
 
         <button id="sound-toggle" onclick="toggleSound()">🔇</button>
-        <div id="powerup-ui" class="powerup-timer">POWERUP ACTIVE</div>
     </div>
 
     <div id="start-screen">
@@ -515,25 +790,71 @@
             </div>
 
             <div class="footer">
-                <a href="privacy.html">Privacy Policy</a> &nbsp;·&nbsp; © 2026 SodaBro
+                <a href="#" onclick="showLeaderboard(); return false;">🏆 Top Scores</a>
+                &nbsp;·&nbsp;
+                <a href="privacy.html">Privacy Policy</a>
+                &nbsp;·&nbsp; © 2026 SodaBro
             </div>
 
         </div>
     </div>
 
     <div id="level-screen" style="display:none;">
-        <h1 style="font-size: 44px;">LEVEL UP!</h1>
-        <div id="badge-area"></div>
-        <button onclick="nextLevel()">CONTINUE</button>
-        <p class="controls-hint">Or press [ENTER]</p>
+        <div class="bubbles">
+            <div class="bub"></div><div class="bub"></div><div class="bub"></div>
+            <div class="bub"></div><div class="bub"></div><div class="bub"></div>
+            <div class="bub"></div><div class="bub"></div><div class="bub"></div>
+        </div>
+        <div class="lv-content">
+            <div class="lv-title">LEVEL UP!</div>
+            <div id="badge-area"></div>
+            <button class="go-btn-primary" onclick="nextLevel()">▶ CONTINUE</button>
+            <p class="lv-hint">[ENTER] to continue</p>
+        </div>
     </div>
 
     <div id="game-over-screen" style="display:none;">
-        <h1 style="font-size: 40px;">CRACKED!</h1>
-        <p>Too much ice!</p>
-        <div id="finalScore" style="font-size: 72px; font-weight: bold;">0</div>
-        <button onclick="resetGame()">REPLAY</button>
-        <p class="controls-hint">Or press [ENTER]</p>
+        <div class="bubbles">
+            <div class="bub"></div><div class="bub"></div><div class="bub"></div>
+            <div class="bub"></div><div class="bub"></div><div class="bub"></div>
+            <div class="bub"></div><div class="bub"></div><div class="bub"></div>
+        </div>
+
+        <div class="go-content">
+            <div class="go-title">CRACKED!</div>
+            <div class="go-sub">Too much ice — your fizz fell flat.</div>
+
+            <div class="go-score-wrap">
+                <div class="go-score-label">Your Score</div>
+                <div id="finalScore" class="go-score">0</div>
+            </div>
+
+            <div id="score-submit">
+                <input id="initials-input" maxlength="8" autocomplete="off"
+                       placeholder="NAME" aria-label="Your name"
+                       oninput="this.value=this.value.toUpperCase()">
+                <button id="submit-score-btn" onclick="submitScore()">SUBMIT</button>
+            </div>
+            <div id="submit-status">Enter your name to post your score</div>
+
+            <button class="go-btn-primary" onclick="resetGame()">▶ REPLAY</button>
+            <button class="go-btn-ghost" onclick="showLeaderboard()">🏆 TOP SCORES</button>
+            <p class="go-hint">[ENTER] to replay</p>
+        </div>
+    </div>
+
+    <!-- TOP SCORES / LEADERBOARD -->
+    <div id="leaderboard-screen" style="display:none;">
+        <div class="lb-panel">
+            <h1 class="lb-title">🏆 Top Scores</h1>
+            <div id="lb-list" class="lb-list">
+                <div class="lb-loading">Loading…</div>
+            </div>
+            <div class="lb-actions">
+                <button class="lb-play" onclick="startGame()">▶ PLAY</button>
+                <button class="lb-close" onclick="hideLeaderboard()">CLOSE</button>
+            </div>
+        </div>
     </div>
 
     <!-- COACH / INSTRUCTION BANNER -->
@@ -542,23 +863,159 @@
     </div>
 </div>
 
+<!-- Firebase (compat build) for the Top Scores leaderboard -->
+<script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore-compat.js"></script>
+
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const frozenAlert = document.getElementById('frozen-alert');
     const scoreElement = document.getElementById('currentScore');
     const levelElement = document.getElementById('currentLevel');
-    const powerupUI = document.getElementById('powerup-ui');
     const hit1 = document.getElementById('hit-1');
     const hit2 = document.getElementById('hit-2');
     const coachBar = document.getElementById('coach-bar');
     const coachMessage = document.getElementById('coach-message');
 
+    // ===================================================
+    // ===== FIREBASE LEADERBOARD ========================
+    // ===================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyB1jXrzVBt64s3Q9p4ePIXOQiKH8ROl0A0",
+        authDomain: "fizz-fall.firebaseapp.com",
+        projectId: "fizz-fall",
+        storageBucket: "fizz-fall.firebasestorage.app",
+        messagingSenderId: "522026655525",
+        appId: "1:522026655525:web:64e13aa277c09dcd8344cc",
+        measurementId: "G-LB63XZLLNV"
+    };
+    const SCORES_COLLECTION = 'scores';
+
+    let db = null;
+    try {
+        if (window.firebase && firebase.firestore) {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+        } else {
+            console.warn('Firebase SDK did not load — leaderboard disabled.');
+        }
+    } catch (e) {
+        console.warn('Firebase init failed — leaderboard disabled.', e);
+    }
+
+    let scoreSubmitted = false;
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c =>
+            ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    // Reset the submit UI each time the game-over screen appears
+    function prepScoreSubmit() {
+        scoreSubmitted = false;
+        const input  = document.getElementById('initials-input');
+        const btn    = document.getElementById('submit-score-btn');
+        const status = document.getElementById('submit-status');
+        input.value = loadSetting('sodabroInitials') || '';
+        btn.disabled = false;
+        btn.textContent = 'SUBMIT';
+        status.textContent = db
+            ? 'Enter your name to post your score'
+            : 'Leaderboard offline — score not saved';
+    }
+
+    // Write the player's final score to Firestore
+    function submitScore() {
+        const input  = document.getElementById('initials-input');
+        const btn    = document.getElementById('submit-score-btn');
+        const status = document.getElementById('submit-status');
+
+        let initials = (input.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+        if (initials.length === 0) { status.textContent = 'Enter your name first'; return; }
+        if (scoreSubmitted) return;
+        if (!db) { status.textContent = 'Leaderboard offline — score not saved'; return; }
+
+        saveSetting('sodabroInitials', initials);
+        btn.disabled = true;
+        status.textContent = 'Saving…';
+
+        db.collection(SCORES_COLLECTION).add({
+            name: initials,
+            score: score,
+            ts: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            scoreSubmitted = true;
+            btn.textContent = 'SUBMITTED ✓';
+            status.textContent = '✅ Score posted! Tap TOP SCORES to see it.';
+        }).catch(err => {
+            console.warn('Score submit failed', err);
+            btn.disabled = false;
+            status.textContent = '⚠️ Could not save — check rules / connection';
+        });
+    }
+
+    // Fetch and render the top 10 scores
+    function loadLeaderboard() {
+        const list = document.getElementById('lb-list');
+        if (!db) {
+            list.innerHTML = '<div class="lb-empty">Leaderboard unavailable.<br>Check your connection.</div>';
+            return;
+        }
+        list.innerHTML = '<div class="lb-loading">Loading…</div>';
+
+        db.collection(SCORES_COLLECTION)
+          .orderBy('score', 'desc')
+          .limit(10)
+          .get()
+          .then(snap => {
+              if (snap.empty) {
+                  list.innerHTML = '<div class="lb-empty">No scores yet —<br>be the first! 🥤</div>';
+                  return;
+              }
+              let rows = '', rank = 1;
+              snap.forEach(doc => {
+                  const d  = doc.data();
+                  const nm = escapeHtml(String(d.name || '???').slice(0, 8));
+                  const sc = Number(d.score) || 0;
+                  const badge = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+                  rows += '<div class="lb-row">' +
+                              '<span class="lb-rank">' + badge + '</span>' +
+                              '<span class="lb-name">' + nm + '</span>' +
+                              '<span class="lb-score">' + sc + '</span>' +
+                          '</div>';
+                  rank++;
+              });
+              list.innerHTML = rows;
+          })
+          .catch(err => {
+              console.warn('Leaderboard load failed', err);
+              list.innerHTML = '<div class="lb-empty">Could not load scores.<br>Try again later.</div>';
+          });
+    }
+
+    function showLeaderboard() {
+        document.getElementById('leaderboard-screen').style.display = 'flex';
+        loadLeaderboard();
+    }
+    function hideLeaderboard() {
+        document.getElementById('leaderboard-screen').style.display = 'none';
+    }
+
     let gameActive = false, isLevelingUp = false, isGameOver = false;
     let score = 0, level = 1, iceHits = 0;
     let freezeFrames = 0, invulFrames = 0, frameCount = 0;
     let activePowerup = null, powerupTime = 0, scoreToNextLevel = 50;
-    let soundEnabled = localStorage.getItem('fizzFallSound') !== 'false'; // default ON
+
+    // --- Safe localStorage helpers (never throw, even in private mode) ---
+    function saveSetting(key, value) {
+        try { localStorage.setItem(key, value); } catch (e) {}
+    }
+    function loadSetting(key) {
+        try { return localStorage.getItem(key); } catch (e) { return null; }
+    }
+
+    // Sound preference is remembered per device — defaults ON until turned off.
+    let soundEnabled = loadSetting('sodabroSound') !== 'off';
 
     // --- CHANGE 2: Delta-time variables for consistent speed across all devices ---
     let lastTimestamp = null;
@@ -567,7 +1024,7 @@
 
     // Player now has vy for full 2D movement
     const player = { x: 0, y: 150, radius: 18, vx: 0, vy: 0, friction: 0.92 };
-    let obstacles = [], powerups = [], backgroundBubbles = [], floatingTexts = [], bottlecaps = [];
+    let obstacles = [], powerups = [], backgroundBubbles = [], bottlecaps = [];
     let bottlecapSpawnAccum = 0;
     let bottlecapIntroShown = false; // one-time "NEW THREAT" banner per run
     let rushIntroSpawned = false;    // guarantees one rush bottle in first 5s of Level 1
@@ -709,7 +1166,7 @@
     function toggleSound() {
         initAudio();
         soundEnabled = !soundEnabled;
-        localStorage.setItem('fizzFallSound', soundEnabled);
+        saveSetting('sodabroSound', soundEnabled ? 'on' : 'off');
         document.getElementById('sound-toggle').innerText = soundEnabled ? '🔊' : '🔇';
         if (soundEnabled) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -731,13 +1188,18 @@
     // --- CHANGE 1: Keyboard — track held state; handle Enter/Space inline ---
     window.addEventListener('keydown', (e) => {
         keys[e.code] = true;
+        const typingInitials = document.activeElement && document.activeElement.id === 'initials-input';
+        const lbOpen = document.getElementById('leaderboard-screen').style.display === 'flex';
         if (e.code === 'Enter') {
-            if (!gameActive && !isLevelingUp && !isGameOver) startGame();
+            if (typingInitials) { submitScore(); }
+            else if (lbOpen) { /* leaderboard open — Enter does nothing */ }
+            else if (!gameActive && !isLevelingUp && !isGameOver) startGame();
             else if (isLevelingUp) nextLevel();
             else if (isGameOver) resetGame();
             e.preventDefault();
         }
         if (e.code === 'Space') {
+            if (typingInitials) return; // let space behave normally in the field
             toggleSound();
             e.preventDefault();
         }
@@ -848,24 +1310,16 @@
         return isSpraying;
     }
 
-    // (unchanged) Powerup application
+    // Powerup application (notifications now handled by the coach bar)
     function applyPowerup(type) {
         if (type === 'mentos') {
             obstacles = [];
             activePowerup = null;
-            powerupUI.style.display = 'none';
             playSound(1200, 'sine', 0.3, 0.15);
         } else {
             // Rush duration: 15s at level 1 (900 dt-units), shrinks 15% per level
             activePowerup = type;
             powerupTime = Math.round(900 * Math.pow(0.85, level - 1));
-            powerupUI.style.display = 'block';
-            powerupUI.innerText = type === 'shield' ? "COLA SHIELD!" :
-                                 type === 'rush' ? "ORANGE RUSH!" : "GREEN DEW!";
-            // Rush: flash a center-screen teaching banner so the player knows to smash ice
-            if (type === 'rush') {
-                floatingTexts.push({ x: null, y: null, text: 'SMASH THE ICE!  +5', life: 110, center: true, big: true });
-            }
             playSound(800, 'sine', 0.2, 0.15);
         }
     }
@@ -876,7 +1330,6 @@
             if (activePowerup === 'shield') {
                 activePowerup = null;
                 powerupTime = 0;
-                powerupUI.style.display = 'none';
                 invulFrames = 60;
                 playSound(800, 'sine', 0.2, 0.15);
             }
@@ -888,12 +1341,12 @@
             isGameOver = true;
             document.getElementById('game-over-screen').style.display = 'flex';
             document.getElementById('finalScore').innerText = score;
+            prepScoreSubmit();
             playSound(100, 'sawtooth', 0.4, 0.2);
             return;
         }
         freezeFrames = 120;
         invulFrames = 180;
-        frozenAlert.style.display = 'block';
         if (iceHits === 1) hit1.classList.add('cracked');
         if (iceHits === 2) hit2.classList.add('cracked');
         playSound(150, 'sawtooth', 0.2, 0.15);
@@ -928,7 +1381,7 @@
         gameActive = true; isLevelingUp = false; isGameOver = false;
         score = 0; level = 1; iceHits = 0;
         freezeFrames = 0; invulFrames = 90; frameCount = 0; // 90 dt-units = 1.5s grace period
-        obstacles = []; powerups = []; floatingTexts = []; bottlecaps = [];
+        obstacles = []; powerups = []; bottlecaps = [];
         bottlecapSpawnAccum = 0;
         bottlecapIntroShown = false;
         activePowerup = null; powerupTime = 0; scoreToNextLevel = 50;
@@ -946,8 +1399,7 @@
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('game-over-screen').style.display = 'none';
         document.getElementById('level-screen').style.display = 'none';
-        frozenAlert.style.display = 'none';
-        powerupUI.style.display = 'none';
+        document.getElementById('leaderboard-screen').style.display = 'none';
         scoreElement.innerText = "0";
         levelElement.innerText = "1";
         if (soundEnabled && audioCtx) { musicNextTime = audioCtx.currentTime; musicStep = 0; }
@@ -998,7 +1450,6 @@
         // Tick timers proportionally to real elapsed time
         if (freezeFrames > 0) {
             freezeFrames = Math.max(0, freezeFrames - dt);
-            if (freezeFrames === 0) frozenAlert.style.display = 'none';
         }
         if (invulFrames > 0) invulFrames = Math.max(0, invulFrames - dt);
         if (powerupTime > 0) {
@@ -1013,16 +1464,7 @@
             }
             if (powerupTime === 0) {
                 activePowerup = null;
-                powerupUI.style.display = 'none';
-                powerupUI.style.opacity = '1';
                 rushWarnLastTick = 0;
-            } else if (activePowerup === 'rush' && powerupTime <= 180) {
-                // Flash the label in sync with the border strobe
-                powerupUI.style.opacity = Math.floor(frameCount / 18) % 2 === 0 ? '1' : '0';
-                powerupUI.innerText = `ORANGE RUSH — ${Math.ceil(powerupTime / 60)}s`;
-            } else if (activePowerup === 'rush') {
-                powerupUI.style.opacity = '1';
-                powerupUI.innerText = 'ORANGE RUSH!';
             }
         }
 
@@ -1072,7 +1514,7 @@
             gameActive = false;
             isLevelingUp = true;
             document.getElementById('level-screen').style.display = 'flex';
-            document.getElementById('badge-area').innerHTML = `<h1 style="font-size:80px;">${level+1}</h1>`;
+            document.getElementById('badge-area').innerHTML = `<h1>${level + 1}</h1>`;
         }
 
         for (let i = powerups.length-1; i>=0; i--) {
@@ -1101,7 +1543,6 @@
                     // Smash the ice cube for bonus points
                     score += 5;
                     scoreElement.innerText = score;
-                    floatingTexts.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, text: '+5', life: 55, center: false, big: false });
                     playSound(600 + Math.random() * 300, 'triangle', 0.12, 0.12);
                 } else {
                     triggerFreeze();
@@ -1281,39 +1722,127 @@
             ctx.restore();
         });
 
-        // Draw player bubble (flashes during invulnerability)
+        // ── Draw SodaBro character ──────────────────────────────────────────
         if (invulFrames === 0 || Math.floor(frameCount / 5) % 2 === 0) {
-            // Rush: pulsing flame aura drawn behind the bubble
-            if (activePowerup === 'rush') {
-                const pulse = Math.sin(frameCount * 0.2);
-                const auraR = player.radius + 10 + pulse * 5;
-                const auraGrad = ctx.createRadialGradient(player.x, player.y, player.radius - 2, player.x, player.y, auraR + 8);
-                auraGrad.addColorStop(0, 'rgba(255, 200, 0, 0.75)');
-                auraGrad.addColorStop(0.5, 'rgba(255, 100, 0, 0.4)');
-                auraGrad.addColorStop(1, 'rgba(255, 60, 0, 0)');
+            const px = player.x, py = player.y, r = player.radius;
+            const frozen   = freezeFrames > 0;
+            const rushing  = activePowerup === 'rush';
+            const shielded = activePowerup === 'shield';
+
+            // Rush flame aura (behind character)
+            if (rushing) {
+                const pulse  = Math.sin(frameCount * 0.2);
+                const auraR  = r + 10 + pulse * 5;
+                const auraGr = ctx.createRadialGradient(px, py, r - 2, px, py, auraR + 8);
+                auraGr.addColorStop(0,   'rgba(255,200,0,0.75)');
+                auraGr.addColorStop(0.5, 'rgba(255,100,0,0.4)');
+                auraGr.addColorStop(1,   'rgba(255,60,0,0)');
                 ctx.beginPath();
-                ctx.arc(player.x, player.y, auraR + 8, 0, Math.PI * 2);
-                ctx.fillStyle = auraGrad;
+                ctx.arc(px, py, auraR + 8, 0, Math.PI * 2);
+                ctx.fillStyle = auraGr;
                 ctx.fill();
             }
+
+            ctx.save();
+
+            // Body — colour shifts with game state
+            const bTop  = frozen ? '#9ae8ff' : rushing ? '#ffe57a' : '#ffcc80';
+            const bMid  = frozen ? '#00e5ff' : rushing ? '#ffeb3b' : '#ff9800';
+            const bEdge = frozen ? '#0288d1' : rushing ? '#ff8f00' : '#e65100';
+            const grad  = ctx.createRadialGradient(px - r*0.28, py - r*0.3, r*0.08, px, py, r);
+            grad.addColorStop(0,    '#ffffff');
+            grad.addColorStop(0.22, bTop);
+            grad.addColorStop(0.62, bMid);
+            grad.addColorStop(1,    bEdge);
             ctx.beginPath();
-            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-            let color = '#ff9800';
-            if (freezeFrames > 0) color = '#00e5ff';
-            else if (activePowerup === 'rush') color = '#ffeb3b';
-            const grad = ctx.createRadialGradient(player.x-5, player.y-5, 2, player.x, player.y, player.radius);
-            grad.addColorStop(0, 'white');
-            grad.addColorStop(0.4, color);
-            grad.addColorStop(1, '#e65100');
+            ctx.arc(px, py, r, 0, Math.PI * 2);
             ctx.fillStyle = grad;
             ctx.fill();
-            ctx.beginPath();
-            ctx.arc(player.x - 6, player.y - 6, 4, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
-            ctx.fill();
-            if (activePowerup === 'shield') {
+
+            // Rosy cheeks
+            ctx.fillStyle = frozen ? 'rgba(130,215,255,0.42)' : 'rgba(255,95,75,0.30)';
+            ctx.beginPath(); ctx.ellipse(px - r*0.48, py + r*0.22, r*0.22, r*0.13, -0.2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(px + r*0.48, py + r*0.22, r*0.22, r*0.13,  0.2, 0, Math.PI*2); ctx.fill();
+
+            // Eyes
+            const eY  = py - r * 0.06;
+            const eOX = r * 0.30;
+            const eR  = rushing ? r * 0.22 : r * 0.19;   // wider when excited
+            ctx.fillStyle = 'white';
+            ctx.beginPath(); ctx.arc(px - eOX, eY, eR, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(px + eOX, eY, eR, 0, Math.PI*2); ctx.fill();
+
+            // Pupils (slightly forward-looking)
+            const pR  = eR * 0.52;
+            ctx.fillStyle = frozen ? '#003d60' : '#1a0800';
+            ctx.beginPath(); ctx.arc(px - eOX + pR*0.38, eY + pR*0.28, pR, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(px + eOX + pR*0.38, eY + pR*0.28, pR, 0, Math.PI*2); ctx.fill();
+
+            // Eye shine
+            const sR = pR * 0.52;
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.beginPath(); ctx.arc(px - eOX + pR*0.12, eY - pR*0.18, sR, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(px + eOX + pR*0.12, eY - pR*0.18, sR, 0, Math.PI*2); ctx.fill();
+
+            // Eyebrows — express game state
+            ctx.lineWidth = Math.max(1, r * 0.11);
+            ctx.lineCap   = 'round';
+            ctx.strokeStyle = frozen ? '#004d75' : '#6b2d00';
+            const bRow = eY - eR * 1.5;
+            if (frozen) {
+                // Worried: inner corners raised (↘↙)
+                ctx.beginPath(); ctx.moveTo(px - eOX - eR*0.7, bRow + eR*0.35); ctx.lineTo(px - eOX + eR*0.7, bRow - eR*0.1); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(px + eOX + eR*0.7, bRow + eR*0.35); ctx.lineTo(px + eOX - eR*0.7, bRow - eR*0.1); ctx.stroke();
+            } else if (rushing) {
+                // Fierce: outer corners raised (↗↖)
+                ctx.beginPath(); ctx.moveTo(px - eOX - eR*0.7, bRow - eR*0.1); ctx.lineTo(px - eOX + eR*0.7, bRow + eR*0.35); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(px + eOX + eR*0.7, bRow - eR*0.1); ctx.lineTo(px + eOX - eR*0.7, bRow + eR*0.35); ctx.stroke();
+            } else {
+                // Happy: gently raised
+                ctx.beginPath(); ctx.moveTo(px - eOX - eR*0.7, bRow + eR*0.15); ctx.lineTo(px - eOX + eR*0.7, bRow - eR*0.1); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(px + eOX - eR*0.7, bRow - eR*0.1); ctx.lineTo(px + eOX + eR*0.7, bRow + eR*0.15); ctx.stroke();
+            }
+
+            // Mouth
+            ctx.lineWidth = Math.max(1, r * 0.10);
+            ctx.lineCap   = 'round';
+            const mCY = py + r * 0.32;
+            const mR  = r * 0.30;
+            if (frozen) {
+                // Frown — sad/scared
+                ctx.strokeStyle = '#004d75';
+                ctx.beginPath(); ctx.arc(px, mCY, mR, Math.PI, 0); ctx.stroke();
+            } else if (rushing) {
+                // Big open excited grin (filled)
+                ctx.fillStyle = '#6b2d00';
+                ctx.beginPath(); ctx.arc(px, mCY - mR*0.18, mR, 0, Math.PI); ctx.fill();
+            } else {
+                // Happy smile
+                ctx.strokeStyle = '#6b2d00';
+                ctx.beginPath(); ctx.arc(px, mCY - mR*0.55, mR, 0, Math.PI); ctx.stroke();
+            }
+
+            // Fizz bubbles floating above (gently animated)
+            const fa = frameCount * 0.055;
+            const fizz = [
+                { ox:  r*0.12, oy: r*1.26 + Math.sin(fa)       * 1.5, br: r*0.10 },
+                { ox: -r*0.27, oy: r*1.52 + Math.sin(fa + 1.1) * 1.8, br: r*0.07 },
+                { ox:  r*0.40, oy: r*1.70 + Math.sin(fa + 2.3) * 1.3, br: r*0.06 },
+            ];
+            ctx.strokeStyle = 'rgba(255,255,255,0.60)';
+            ctx.lineWidth = 1;
+            for (const b of fizz) {
                 ctx.beginPath();
-                ctx.arc(player.x, player.y, player.radius + 10, 0, Math.PI * 2);
+                ctx.arc(px + b.ox, py - b.oy, b.br, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+
+            // Shield ring
+            if (shielded) {
+                ctx.beginPath();
+                ctx.arc(px, py, r + 10, 0, Math.PI * 2);
                 ctx.strokeStyle = '#3d1f00';
                 ctx.setLineDash([5, 5]);
                 ctx.lineWidth = 3;
@@ -1323,39 +1852,6 @@
         }
 
         update(dt);
-
-        // Floating texts: +5 hits and the rush activation banner
-        for (let i = floatingTexts.length - 1; i >= 0; i--) {
-            const t = floatingTexts[i];
-            t.life -= dt;
-            if (t.life <= 0) { floatingTexts.splice(i, 1); continue; }
-            const alpha = Math.min(1, t.life / 30);
-            ctx.save();
-            if (t.center) {
-                // Big centered activation banner — fades in then out
-                const maxLife = 110;
-                const fadeIn  = Math.min(1, (maxLife - t.life) / 15);
-                const fadeOut = Math.min(1, t.life / 25);
-                ctx.globalAlpha = Math.min(fadeIn, fadeOut);
-                ctx.font = 'bold 28px "Segoe UI", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillStyle = '#fff700';
-                ctx.shadowColor = '#ff6600';
-                ctx.shadowBlur = 18;
-                ctx.fillText(t.text, canvas.width / 2, canvas.height / 2 - 30);
-            } else {
-                // +5 floating upward from hit position
-                const elapsed = 55 - t.life;
-                ctx.globalAlpha = alpha;
-                ctx.font = 'bold 22px "Segoe UI", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillStyle = '#ffdd00';
-                ctx.shadowColor = '#ff6600';
-                ctx.shadowBlur = 10;
-                ctx.fillText(t.text, t.x, t.y - elapsed * 0.9);
-            }
-            ctx.restore();
-        }
 
         updateCoachBar();
 
@@ -1369,38 +1865,44 @@
         let text, mood;
 
         if (isGameOver) {
-            text = '💥 CRACKED! — Tap REPLAY';
+            text = '💥  CRACKED!  HIT REPLAY';
             mood = 'danger';
         } else if (isLevelingUp) {
-            text = '✅ LEVEL CLEARED — Nice run!';
+            text = '🎉  LEVEL CLEARED — NICE!';
             mood = 'good';
         } else if (!gameActive) {
-            text = '🥤 Press START to play';
+            text = '🥤  TAP PLAY TO START';
             mood = 'idle';
         } else if (freezeFrames > 0) {
-            text = '🥶 FROZEN — shake it off!';
+            text = '🥶  BRRR!  SHAKE IT OFF!';
             mood = 'danger';
         } else if (bottlecaps.length > 0) {
             // Bottlecap threat — warned here instead of on the play field
             text = bottlecaps.length > 1
-                ? '🔴 BOTTLECAPS INCOMING — DODGE!'
-                : '🔴 BOTTLECAP INCOMING — DODGE IT!';
+                ? '🧢  CAPS INCOMING — DODGE!'
+                : '🧢  BOTTLECAP INCOMING — DODGE!';
             mood = 'danger';
         } else if (activePowerup === 'rush' && powerupTime > 0 && powerupTime <= 180) {
-            text = `⏰ CRUSH TIME ENDING — ${Math.ceil(powerupTime / 60)}s!`;
+            text = `⏳  HURRY!  ${Math.ceil(powerupTime / 60)}s LEFT TO SMASH!`;
             mood = 'warn';
         } else if (activePowerup === 'rush') {
-            text = '🧊 CRUSH THE ICE! — +5 each';
+            text = '🔥  SMASH THE ICE — +5 EACH!';
             mood = 'rush';
         } else if (powerups.length > 0) {
-            text = '🍾 GET THE BOTTLE!';
+            text = '🍾  GRAB THAT BOTTLE!';
             mood = 'good';
         } else {
-            text = '❄️ AVOID THE ICE';
+            text = '❄️  DODGE THE ICE!';
             mood = 'idle';
         }
 
-        if (coachMessage.textContent !== text) coachMessage.textContent = text;
+        if (coachMessage.textContent !== text) {
+            coachMessage.textContent = text;
+            // Retrigger the pop-in animation so each new message feels alive
+            coachMessage.style.animation = 'none';
+            void coachMessage.offsetWidth; // force reflow
+            coachMessage.style.animation = 'coachPop 0.34s cubic-bezier(.34,1.56,.64,1)';
+        }
         if (mood !== lastCoachMood) {
             coachBar.className = 'mood-' + mood;
             lastCoachMood = mood;

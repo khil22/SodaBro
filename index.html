@@ -1043,7 +1043,7 @@
     let gameActive = false, isLevelingUp = false, isGameOver = false;
     let score = 0, level = 1, iceHits = 0;
     let freezeFrames = 0, invulFrames = 0, frameCount = 0;
-    let activePowerup = null, powerupTime = 0, scoreToNextLevel = 50;
+    let activePowerup = null, powerupTime = 0, scoreToNextLevel = 100;
 
     // --- Safe localStorage helpers (never throw, even in private mode) ---
     function saveSetting(key, value) {
@@ -1511,7 +1511,7 @@
         obstacles = []; powerups = []; bottlecaps = [];
         bottlecapSpawnAccum = 0;
         bottlecapIntroShown = false;
-        activePowerup = null; powerupTime = 0; scoreToNextLevel = 50;
+        activePowerup = null; powerupTime = 0; scoreToNextLevel = 100;
         // Rush bottle appears at a random moment within the first 5 seconds (60–300 dt-units)
         rushIntroSpawned = false;
         rushIntroDelay = 60 + Math.random() * 240;
@@ -1537,7 +1537,7 @@
     function nextLevel() {
         level++;
         isLevelingUp = false;
-        scoreToNextLevel = score + 50;
+        scoreToNextLevel = score + 100;
         levelElement.innerText = level;
         document.getElementById('level-screen').style.display = 'none';
         gameActive = true;

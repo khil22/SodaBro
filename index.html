@@ -351,8 +351,8 @@
             width: 100%; max-width: 430px;
             min-height: 100%;
             display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            padding: 52px 24px 44px;
+            align-items: center; justify-content: flex-start;
+            padding: 12px 24px 20px;
         }
 
         /* Logo */
@@ -362,7 +362,7 @@
         }
         #start-screen .logo {
             font-family: 'Boogaloo', cursive;
-            font-size: clamp(78px, 23vw, 104px);
+            font-size: clamp(46px, 13.5vw, 62px);
             line-height: 0.92;
             letter-spacing: -2px;
             background: linear-gradient(135deg, var(--orange) 0%, var(--yellow) 30%, var(--pink) 62%, var(--teal) 100%);
@@ -380,18 +380,18 @@
         #start-screen .logo-eyebrow {
             font-weight: 900; font-size: 11px;
             letter-spacing: 4px; text-transform: uppercase;
-            color: var(--muted); margin-top: 6px;
+            color: var(--muted); margin-top: 3px;
         }
 
         /* Tagline */
         #start-screen .tagline {
-            text-align: center; margin: 26px 0 18px;
+            text-align: center; margin: 8px 0 8px;
             animation: fadeUp .65s .18s cubic-bezier(.22,1,.36,1) both;
         }
         #start-screen .tagline h2 {
             font-family: 'Boogaloo', cursive;
-            font-size: clamp(28px, 8.5vw, 38px);
-            line-height: 1.25; color: var(--text); margin-bottom: 12px;
+            font-size: clamp(21px, 6vw, 28px);
+            line-height: 1.12; color: var(--text); margin-bottom: 4px;
         }
         #start-screen .tagline h2 .ice { color: #a5f3fc; }
         #start-screen .tagline h2 .btl {
@@ -403,35 +403,35 @@
         /* Play button */
         /* How-to-play legend (newbie onboarding) */
         #start-screen .howto {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-            width: 100%; max-width: 340px; margin: 2px 0 14px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            width: 100%; max-width: 340px; margin: 2px 0 8px;
             animation: fadeUp .65s .24s cubic-bezier(.22,1,.36,1) both;
         }
         #start-screen .howto-card {
             background: var(--card); border: 1px solid var(--border);
-            border-radius: 18px; padding: 13px 10px 12px; text-align: center;
+            border-radius: 14px; padding: 7px 7px 7px; text-align: center;
         }
         #start-screen .howto-card.grab  { border-color: rgba(0,240,200,0.32); }
         #start-screen .howto-card.dodge { border-color: rgba(165,243,252,0.32); }
-        #start-screen .howto-canvas { width: 54px; height: 54px; display: block; margin: 0 auto 4px; }
+        #start-screen .howto-canvas { width: 38px; height: 38px; display: block; margin: 0 auto 2px; }
         #start-screen .howto-tag {
-            font-family: 'Boogaloo', cursive; font-size: 19px; letter-spacing: 1px; margin-bottom: 4px;
+            font-family: 'Boogaloo', cursive; font-size: 16px; letter-spacing: 1px; margin-bottom: 1px;
         }
         #start-screen .tag-grab  { color: var(--teal); }
         #start-screen .tag-dodge { color: #a5f3fc; }
-        #start-screen .howto-desc { font-size: 11px; color: var(--muted); line-height: 1.45; }
+        #start-screen .howto-desc { font-size: 11px; color: var(--muted); line-height: 1.25; }
         #start-screen .howto-move {
-            font-size: 13px; font-weight: 800; color: var(--text);
-            margin: 0 0 26px; text-align: center;
+            font-size: 11px; font-weight: 800; color: var(--text);
+            margin: 0 0 10px; text-align: center;
             animation: fadeUp .65s .30s cubic-bezier(.22,1,.36,1) both;
         }
 
         #start-screen .play-btn {
             display: flex; align-items: center; justify-content: center; gap: 10px;
-            width: 100%; max-width: 310px; padding: 20px 0;
+            width: 100%; max-width: 310px; padding: 13px 0;
             background: linear-gradient(135deg, var(--orange), var(--pink));
             color: #fff; font-family: 'Boogaloo', cursive;
-            font-size: 30px; letter-spacing: 2px; text-decoration: none;
+            font-size: 24px; letter-spacing: 2px; text-decoration: none;
             border-radius: 60px; cursor: pointer; user-select: none;
             animation: fadeUp .65s .32s cubic-bezier(.22,1,.36,1) both, glow 2.8s 1s ease-in-out infinite;
             transition: transform .12s, filter .12s;
@@ -445,27 +445,27 @@
 
         /* Shortcut section */
         #start-screen .shortcut-section {
-            width: 100%; max-width: 360px; margin-top: 40px;
+            width: 100%; max-width: 360px; margin-top: 10px;
             animation: fadeUp .65s .46s cubic-bezier(.22,1,.36,1) both;
         }
         #start-screen .shortcut-label {
             text-align: center; font-size: 10px; font-weight: 900;
             letter-spacing: 3px; text-transform: uppercase;
-            color: var(--muted); margin-bottom: 14px;
+            color: var(--muted); margin-bottom: 5px;
         }
-        #start-screen .sc-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        #start-screen .sc-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         #start-screen .sc-card {
-            background: var(--card); border-radius: 18px;
-            padding: 18px 14px 16px; border: 1px solid var(--border);
+            background: var(--card); border-radius: 16px;
+            padding: 8px 9px 8px; border: 1px solid var(--border);
         }
         #start-screen .sc-card.apple   { border-color: rgba(255,255,255,0.11); }
         #start-screen .sc-card.android { border-color: rgba(0,240,200,0.18); }
-        #start-screen .sc-icon  { font-size: 24px; display: block; margin-bottom: 8px; }
-        #start-screen .sc-title { font-size: 13px; font-weight: 900; color: var(--text); margin-bottom: 10px; line-height: 1.2; }
+        #start-screen .sc-icon  { font-size: 15px; display: block; margin-bottom: 2px; }
+        #start-screen .sc-title { font-size: 12px; font-weight: 900; color: var(--text); margin-bottom: 3px; line-height: 1.2; }
         #start-screen .sc-steps { list-style: none; padding: 0; counter-reset: steps; }
         #start-screen .sc-steps li {
-            counter-increment: steps; font-size: 11px; color: var(--muted);
-            line-height: 1.65; padding-left: 16px; position: relative;
+            counter-increment: steps; font-size: 10px; color: var(--muted);
+            line-height: 1.28; padding-left: 15px; position: relative;
         }
         #start-screen .sc-steps li::before {
             content: counter(steps) "."; position: absolute; left: 0;
@@ -475,7 +475,7 @@
 
         /* Footer */
         #start-screen .footer {
-            margin-top: 36px; font-size: 11px; color: var(--muted); text-align: center;
+            margin-top: 10px; font-size: 11px; color: var(--muted); text-align: center;
             animation: fadeUp .65s .58s cubic-bezier(.22,1,.36,1) both;
         }
         #start-screen .footer a { color: var(--orange); text-decoration: none; }
@@ -782,7 +782,6 @@
 
             <div class="tagline">
                 <h2>Avoid the <span class="ice">Ice</span>.<br>Get the <span class="btl">Bottles</span>.</h2>
-                <p>Dodge falling ice cubes, grab soda powerups, and smash your way up the leaderboard. No download. No login. Just play.</p>
             </div>
 
             <div class="howto">
@@ -969,7 +968,7 @@
         const btn    = document.getElementById('submit-score-btn');
         const status = document.getElementById('submit-status');
 
-        let initials = (input.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+        let initials = (input.value || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').slice(0, 8).replace(/\s+/g, ' ').trim();
         if (initials.length === 0) { status.textContent = 'Enter your name first'; return; }
         if (scoreSubmitted) return;
         if (!db) { status.textContent = 'Leaderboard offline — score not saved'; return; }

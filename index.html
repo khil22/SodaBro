@@ -212,62 +212,6 @@
             z-index: 20;
         }
 
-        #level-screen {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 100;
-            background: var(--dark);
-            color: var(--text);
-            font-family: 'Nunito', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-y: auto;
-            overflow-x: hidden;
-            pointer-events: auto;
-        }
-        #level-screen::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(ellipse 80% 60% at 20% 0%,   rgba(0,240,200,.22) 0%, transparent 55%),
-                radial-gradient(ellipse 60% 50% at 80% 100%, rgba(255,107,53,.14) 0%, transparent 55%),
-                radial-gradient(ellipse 50% 40% at 50% 50%,  rgba(255,226,52,.07) 0%, transparent 60%);
-            pointer-events: none;
-            z-index: 0;
-        }
-        #level-screen .lv-content {
-            position: relative; z-index: 1;
-            width: 100%; max-width: 430px;
-            min-height: 100%; margin: auto;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            padding: 44px 24px; text-align: center;
-        }
-        .lv-title {
-            font-family: 'Boogaloo', cursive;
-            font-size: clamp(52px, 16vw, 72px);
-            line-height: 0.95;
-            background: linear-gradient(135deg, var(--teal) 0%, var(--yellow) 50%, var(--orange) 100%);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            filter: drop-shadow(0 2px 22px rgba(0,240,200,.45));
-            animation: shimmer 4s ease-in-out infinite;
-        }
-        #badge-area h1 {
-            font-family: 'Boogaloo', cursive;
-            font-size: 96px;
-            line-height: 1;
-            color: var(--teal);
-            text-shadow: 0 0 32px rgba(0,240,200,.5);
-            margin: 14px 0 6px;
-        }
-        .lv-hint { font-size: 11px; color: var(--muted); margin-top: 14px; }
 
         button {
             padding: 15px 45px;
@@ -755,12 +699,7 @@
         <div class="stats-row">
             <div style="display: flex; flex-direction: column; align-items: flex-start;">
                 <div class="stat-box">Score: <span id="currentScore">0</span></div>
-                <div id="freeze-status">
-                    <div class="thaw-meter"><div class="thaw-fill" id="hit-1"></div></div>
-                    <div class="thaw-meter"><div class="thaw-fill" id="hit-2"></div></div>
-                </div>
             </div>
-            <div class="stat-box">Level: <span id="currentLevel">1</span></div>
         </div>
 
         <button id="sound-toggle" onclick="toggleSound()">🔇</button>
@@ -837,20 +776,6 @@
         </div>
     </div>
 
-    <div id="level-screen" style="display:none;">
-        <div class="bubbles">
-            <div class="bub"></div><div class="bub"></div><div class="bub"></div>
-            <div class="bub"></div><div class="bub"></div><div class="bub"></div>
-            <div class="bub"></div><div class="bub"></div><div class="bub"></div>
-        </div>
-        <div class="lv-content">
-            <div class="lv-title">LEVEL UP!</div>
-            <div id="badge-area"></div>
-            <button class="go-btn-primary" onclick="nextLevel()">▶ CONTINUE</button>
-            <p class="lv-hint">[ENTER] to continue</p>
-        </div>
-    </div>
-
     <div id="game-over-screen" style="display:none;">
         <div class="bubbles">
             <div class="bub"></div><div class="bub"></div><div class="bub"></div>
@@ -909,9 +834,6 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const scoreElement = document.getElementById('currentScore');
-    const levelElement = document.getElementById('currentLevel');
-    const hit1 = document.getElementById('hit-1');
-    const hit2 = document.getElementById('hit-2');
     const coachBar = document.getElementById('coach-bar');
     const coachMessage = document.getElementById('coach-message');
 
@@ -1039,10 +961,10 @@
         document.getElementById('leaderboard-screen').style.display = 'none';
     }
 
-    let gameActive = false, isLevelingUp = false, isGameOver = false;
-    let score = 0, level = 1, iceHits = 0;
+    let gameActive = false, isGameOver = false;
+    let score = 0;
     let freezeFrames = 0, invulFrames = 0, frameCount = 0;
-    let activePowerup = null, powerupTime = 0, scoreToNextLevel = 100;
+    let activePowerup = null, powerupTime = 0;
 
     // --- Safe localStorage helpers (never throw, even in private mode) ---
     function saveSetting(key, value) {
@@ -1065,7 +987,7 @@
     let obstacles = [], powerups = [], backgroundBubbles = [], bottlecaps = [];
     let bottlecapSpawnAccum = 0;
     let bottlecapIntroShown = false; // one-time "NEW THREAT" banner per run
-    let rushIntroSpawned = false;    // guarantees one rush bottle in first 5s of Level 1
+    let rushIntroSpawned = false;    // guarantees one rush bottle in the first 5s of a run
     let rushIntroDelay = 0;          // random dt countdown before spawning it
 
     // --- CHANGE 1: Key state tracking for held-key movement (replaces impulse boosts) ---
@@ -1165,7 +1087,7 @@
     }
 
     function playJingle() {
-        if (!soundEnabled || !audioCtx || !gameActive || isLevelingUp) return;
+        if (!soundEnabled || !audioCtx || !gameActive) return;
         const isRush  = activePowerup === 'rush';
         const bpm     = isRush ? 172 : 148;
         const stepDur = 60 / bpm / 4; // sixteenth-note duration in seconds
@@ -1231,8 +1153,7 @@
         if (e.code === 'Enter') {
             if (typingInitials) { submitScore(); }
             else if (lbOpen) { /* leaderboard open — Enter does nothing */ }
-            else if (!gameActive && !isLevelingUp && !isGameOver) startGame();
-            else if (isLevelingUp) nextLevel();
+            else if (!gameActive && !isGameOver) startGame();
             else if (isGameOver) resetGame();
             e.preventDefault();
         }
@@ -1443,9 +1364,9 @@
             activePowerup = null;
             playSound(1200, 'sine', 0.3, 0.15);
         } else {
-            // Rush duration: 15s at level 1 (900 dt-units), shrinks 15% per level
+            // Rush duration: 15s at the start, decays smoothly with time survived (floor 4s)
             activePowerup = type;
-            powerupTime = Math.round(900 * Math.pow(0.85, level - 1));
+            powerupTime = Math.max(240, Math.round(900 * Math.pow(0.85, difficulty())));
             playSound(800, 'sine', 0.2, 0.15);
         }
     }
@@ -1461,21 +1382,13 @@
             }
             return;
         }
-        iceHits++;
-        if (iceHits >= 3) {
-            gameActive = false;
-            isGameOver = true;
-            document.getElementById('game-over-screen').style.display = 'flex';
-            document.getElementById('finalScore').innerText = score;
-            prepScoreSubmit();
-            playSound(100, 'sawtooth', 0.4, 0.2);
-            return;
-        }
-        freezeFrames = 120;
-        invulFrames = 180;
-        if (iceHits === 1) hit1.classList.add('cracked');
-        if (iceHits === 2) hit2.classList.add('cracked');
-        playSound(150, 'sawtooth', 0.2, 0.15);
+        // One hit ends the run
+        gameActive = false;
+        isGameOver = true;
+        document.getElementById('game-over-screen').style.display = 'flex';
+        document.getElementById('finalScore').innerText = score;
+        prepScoreSubmit();
+        playSound(100, 'sawtooth', 0.4, 0.2);
     }
 
     // (unchanged) Spawn logic
@@ -1504,13 +1417,13 @@
 
     function startGame() {
         initAudio();
-        gameActive = true; isLevelingUp = false; isGameOver = false;
-        score = 0; level = 1; iceHits = 0;
+        gameActive = true; isGameOver = false;
+        score = 0;
         freezeFrames = 0; invulFrames = 90; frameCount = 0; // 90 dt-units = 1.5s grace period
         obstacles = []; powerups = []; bottlecaps = [];
         bottlecapSpawnAccum = 0;
         bottlecapIntroShown = false;
-        activePowerup = null; powerupTime = 0; scoreToNextLevel = 100;
+        activePowerup = null; powerupTime = 0;
         // Rush bottle appears at a random moment within the first 5 seconds (60–300 dt-units)
         rushIntroSpawned = false;
         rushIntroDelay = 60 + Math.random() * 240;
@@ -1521,32 +1434,23 @@
         player.y = canvas.height * 0.8;
         player.vx = 0;
         player.vy = 0;
-        hit1.classList.remove('cracked'); hit2.classList.remove('cracked');
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('game-over-screen').style.display = 'none';
-        document.getElementById('level-screen').style.display = 'none';
         document.getElementById('leaderboard-screen').style.display = 'none';
         scoreElement.innerText = "0";
-        levelElement.innerText = "1";
         if (soundEnabled && audioCtx) { musicNextTime = audioCtx.currentTime; musicStep = 0; }
     }
 
     function resetGame() { startGame(); }
 
-    function nextLevel() {
-        level++;
-        isLevelingUp = false;
-        scoreToNextLevel = score + 100;
-        levelElement.innerText = level;
-        document.getElementById('level-screen').style.display = 'none';
-        gameActive = true;
-        bottlecapSpawnAccum = 0;
-        invulFrames = 90; // 1.5s immunity at level start
-        lastTimestamp = null;
-        spawnAccum = 0;
-        rushWarnLastTick = 0;
-        playSound(523, 'sine', 0.2, 0.15);
-        if (soundEnabled && audioCtx) { musicNextTime = audioCtx.currentTime; musicStep = 0; }
+    // ===== CONTINUOUS DIFFICULTY =====
+    // Replaces the old discrete level system. Returns a smooth "level-equivalent"
+    // that grows with time survived (one step per 30s), capped so the run stays
+    // playable forever instead of becoming impossible.
+    const DIFF_PERIOD = 1800;  // dt-units per difficulty step (60 = 1s, so 30s)
+    const DIFF_CAP    = 12;    // ramp tops out after ~6 minutes
+    function difficulty() {
+        return Math.min(DIFF_CAP, frameCount / DIFF_PERIOD);
     }
 
     // --- CHANGE 2: update now receives dt (normalized to 60fps = 1.0) ---
@@ -1557,8 +1461,8 @@
         frameCount += dt;
         playJingle();
 
-        // Level 1 guaranteed rush bottle — drops in at a random moment in the first 5 seconds
-        if (level === 1 && !rushIntroSpawned) {
+        // Guaranteed rush bottle — drops in at a random moment in the first 5 seconds
+        if (!rushIntroSpawned) {
             rushIntroDelay -= dt;
             if (rushIntroDelay <= 0) {
                 rushIntroSpawned = true;
@@ -1623,24 +1527,18 @@
         if (player.y < player.radius)               { player.y = player.radius;               player.vy *= -0.5; }
         if (player.y > canvas.height - player.radius){ player.y = canvas.height - player.radius; player.vy *= -0.5; }
 
-        // Speed compounds 15% per level; level 1 = 3.5 base
-        const speed = 3.5 * Math.pow(1.15, level - 1) * dt;
+        // Speed compounds 15% per difficulty step; base 3.5
+        const dl = difficulty();
+        const speed = 3.5 * Math.pow(1.15, dl) * dt;
 
-        // Spawn interval tightens 12% per level so the board fills faster at high levels
+        // Spawn interval tightens 12% per step so the board fills faster the longer you last
         spawnAccum += dt;
-        const spawnInterval = Math.max(8, 45 * Math.pow(0.88, level - 1));
+        const spawnInterval = Math.max(8, 45 * Math.pow(0.88, dl));
         if (spawnAccum >= spawnInterval) {
             spawnAccum -= spawnInterval;
             spawnEntity();
             score++;
             scoreElement.innerText = score;
-        }
-
-        if (score >= scoreToNextLevel) {
-            gameActive = false;
-            isLevelingUp = true;
-            document.getElementById('level-screen').style.display = 'flex';
-            document.getElementById('badge-area').innerHTML = `<h1>${level + 1}</h1>`;
         }
 
         for (let i = powerups.length-1; i>=0; i--) {
@@ -1677,18 +1575,20 @@
             } else if (o.y > canvas.height + 100) obstacles.splice(i, 1);
         }
 
-        // ===== BOTTLECAP SYSTEM (level 7+) =====
-        if (level >= 7) {
-            // How many bottlecaps can be on screen: 1 at L7, +1 every 2 levels, max 4
-            const maxCaps = Math.min(4, Math.floor((level - 7) / 2) + 1);
-            // Spawn interval shrinks with level
-            const capInterval = Math.max(220, 600 - (level - 7) * 55);
+        // ===== BOTTLECAP SYSTEM (unlocks at 600 points) =====
+        if (score >= 600) {
+            // Intensity grows every 100 points past the 600 unlock, capped
+            const cl = Math.min(12, (score - 600) / 100);
+            // How many bottlecaps can be on screen: 1 at unlock, +1 every 2 steps, max 4
+            const maxCaps = Math.min(4, Math.floor(cl / 2) + 1);
+            // Spawn interval shrinks as you climb
+            const capInterval = Math.max(220, 600 - cl * 55);
             bottlecapSpawnAccum += dt;
             if (bottlecapSpawnAccum >= capInterval && bottlecaps.length < maxCaps) {
                 bottlecapSpawnAccum = 0;
                 const fromLeft = Math.random() < 0.5;
                 const r = 22;
-                const spd = (2.2 + Math.random() * 1.5) * Math.pow(1.08, level - 7);
+                const spd = (2.2 + Math.random() * 1.5) * Math.pow(1.08, cl);
                 bottlecaps.push({
                     x: fromLeft ? -r - 10 : canvas.width + r + 10,
                     y: canvas.height * 0.5 + Math.random() * (canvas.height * 0.38),
@@ -2232,9 +2132,6 @@
         if (isGameOver) {
             text = '💥  CRACKED!  HIT REPLAY';
             mood = 'danger';
-        } else if (isLevelingUp) {
-            text = '🎉  LEVEL CLEARED — NICE!';
-            mood = 'good';
         } else if (!gameActive) {
             text = '🥤  TAP PLAY TO START';
             mood = 'idle';
@@ -2256,7 +2153,7 @@
         } else if (powerups.length > 0) {
             text = '🍾  GRAB THAT BOTTLE!';
             mood = 'good';
-        } else if (level === 1 && frameCount < 260) {
+        } else if (frameCount < 260) {
             text = '👆 DRAG TO MOVE — DODGE THE ICE!';
             mood = 'idle';
         } else {

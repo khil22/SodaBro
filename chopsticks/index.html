@@ -1,0 +1,471 @@
+# The Memory Album — Project Plan
+**Version 1.1 | Solo Developer | 10 hrs/week | 1-week sprints**
+
+---
+
+## How to Read This Plan
+
+- Each sprint is one calendar week at approximately 10 hours of work
+- Tasks are written as things you *do*, not things that exist
+- Every sprint ends with something real and visible — not just code
+- **MVP is clearly marked** — everything before it is the minimum to put in front of your mom
+- Sprints after MVP are enhancements toward a full public launch
+- This plan will change. Treat it as a living document. After every 3–4 sprints, review it together and adjust.
+
+---
+
+## Roles
+
+| Role | Who | Responsibilities |
+|---|---|---|
+| **Product Manager** | You | Decides what gets built, sets priorities, owns the vision, manages the backlog |
+| **Scrum Master** | Claude | Runs sprint planning, tracks progress, removes blockers, keeps the process honest, calls out scope creep |
+| **Tech Lead / Dev Manager** | Claude | Makes architectural decisions, reviews technical approach before code is written, unblocks implementation problems |
+| **Developer** | You | Writes all code with Claude's guidance at every step |
+| **UX Designer** | You, guided by Claude | Makes visual and interaction decisions; Claude flags anything that violates the dementia-informed design rules in the spec |
+| **QA Tester** | You + your mom + your dad + your sister | You test every feature before it ships; your mom's confusion is a bug; your dad and sister test the admin website as real users and report what's confusing or broken |
+| **Admin Testers** | Your dad + your sister | First real users of the admin website — they upload content, write stories, and manage the patient profile exactly as they would in real life; their feedback on the admin experience is as important as your mom's feedback on the patient experience |
+| **Content Manager** | Your dad + your sister | Responsible for gathering and uploading real content — family photos, song clips, personal stories, people profiles; this should not fall on you as the developer |
+| **Legal Reviewer** | You (before public launch) | Must review and approve privacy policy and terms of use before the app is used by anyone outside your immediate family; not urgent for MVP but required before public distribution |
+| **Primary Stakeholder** | Your mom | The definition of success. Her experience, engagement, and enjoyment drive all product decisions above everything else |
+
+---
+
+## The Honest Timeline
+
+At 10 hours/week as a solo developer learning as you go:
+- **MVP (something your mom can actually use):** End of Sprint 10 — approximately 10 weeks
+- **Full launch (PWA + App Store + reports):** End of Sprint 15 — approximately 15 weeks
+- **Real-world buffer:** Add 20–30% for life getting in the way — call it 18 weeks to full launch
+
+These are honest estimates, not optimistic ones.
+
+---
+
+## Sprint Overview
+
+| Sprint | Theme | Key Deliverable | Cumulative Weeks |
+|---|---|---|---|
+| 1 | Front Door | TheMemoryAlbum.com is live with a landing page and suggestion form | 1 |
+| 2 | Foundation | GitHub Codespaces + Firebase + Next.js scaffold deployed | 2 |
+| 3 | Auth + Schema | Login works, Firestore structure in place, admin shell visible | 3 |
+| 4 | Admin: People | Family members can be uploaded with photos | 4 |
+| 5 | Admin: Photos + Songs | Photos and song clips can be uploaded | 5 |
+| 6 | Admin: Stories | Story vignettes with blanks can be written and saved | 6 |
+| 7 | First Game Module | "Finish the Song" is playable | 7 |
+| 8 | Second Game Module | "Who's This?" is playable with spaced repetition | 8 |
+| 9 | Third + Fourth Modules | "Her Story" and "Photo Ordering" are playable | 9 |
+| **10** | **MVP** | **Full daily session works end-to-end. Your mom can use this.** | **10** |
+| 11 | Word Garden | Fifth module complete. All 5 games playable. | 11 |
+| 12 | PWA | Installable to home screen, works offline | 12 |
+| 13 | Push Notifications | Daily morning reminder sent automatically | 13 |
+| 14 | Reports | Admin can see engagement trends and difficulty data | 14 |
+| 15 | Native App | Capacitor build submitted to Apple App Store + Google Play | 15 |
+
+---
+
+## Detailed Sprint Plans
+
+---
+
+### Sprint 1 — The Front Door
+**Goal:** TheMemoryAlbum.com is live before a single line of app code is written.
+People can find it, understand what you're building, and submit suggestions.
+This is your public signal that this project is real.
+
+**Tasks:**
+- [ ] Create a GitHub account if needed; create a new repository called `the-memory-album`
+- [ ] Set up GitHub Codespaces on the repository (browser-based VS Code — no installs required)
+- [ ] Create a Vercel account at vercel.com and connect it to the GitHub repository
+- [ ] Point TheMemoryAlbum.com (GoDaddy) to Vercel using DNS settings
+- [ ] Build a single-page HTML landing page with:
+  - App name and brief description ("A personalized daily memory app for your loved one")
+  - "Coming Soon" messaging
+  - A simple suggestion/feedback form (using Formspree.io — free, no backend required)
+  - Your contact email or a way to follow progress
+- [ ] Deploy it — TheMemoryAlbum.com goes live
+
+**End of sprint deliverable:**
+A real, live website at TheMemoryAlbum.com that you can share with anyone.
+Share it. Send it to family. Post it wherever you want. Start collecting suggestions.
+
+**Notes:**
+This sprint is intentionally lightweight on technical complexity.
+The goal is momentum and a public presence, not infrastructure.
+Formspree handles the suggestion form submissions and emails them to you —
+zero backend code required.
+
+---
+
+### Sprint 2 — Foundation
+**Goal:** Replace the landing page with a real Next.js application.
+The scaffolding that everything else will be built on top of.
+
+**Tasks:**
+- [ ] Initialize a Next.js 14 project with Tailwind CSS inside GitHub Codespaces
+- [ ] Install and configure next-pwa (Workbox) for PWA groundwork
+- [ ] Create a Firebase project in the Firebase Console (firebase.google.com)
+- [ ] Enable Firebase services: Authentication, Firestore, Storage, Cloud Functions
+- [ ] Add Firebase config to the project as environment variables (.env.local)
+- [ ] Set up Vercel environment variables (mirrors .env.local for production)
+- [ ] Create basic page routing structure: /play, /dashboard, /login, /setup
+- [ ] Deploy updated project to Vercel — TheMemoryAlbum.com now runs Next.js
+- [ ] Keep the landing page content live at the root (/) while building behind the scenes
+
+**End of sprint deliverable:**
+A real Next.js app deployed at TheMemoryAlbum.com.
+Visiting /dashboard shows a placeholder. Visiting /play shows a placeholder.
+The app is scaffolded and ready to build on.
+
+---
+
+### Sprint 3 — Auth + Data Schema
+**Goal:** Secure login for family admins. Full Firestore data structure created.
+The admin sees a real (empty) dashboard after logging in.
+
+**Tasks:**
+- [ ] Implement Firebase Authentication (email/password)
+- [ ] Build /login page with email and password form
+- [ ] Build /setup page — wizard for creating a patient profile (name, date of birth, timezone, profile photo)
+- [ ] Create all Firestore collections and subcollections as defined in the technical spec
+- [ ] Implement Firestore Security Rules exactly as specified
+- [ ] Build admin dashboard shell at /dashboard — visible only when logged in
+- [ ] Implement redirect: unauthenticated users sent to /login; authenticated users sent to /dashboard
+- [ ] Implement persistent auth session (patient never logs in again after first setup)
+
+**End of sprint deliverable:**
+You can create an account, log in, and see an empty dashboard.
+The patient profile creation wizard works.
+All data structures exist in Firestore (empty, but correctly shaped).
+
+---
+
+### Sprint 4 — Admin: People Upload
+**Goal:** Family members can be added with photos, names, relationships, and bios.
+This is the content that powers the "Who's This?" game module.
+
+**Tasks:**
+- [ ] Build /dashboard/people page
+- [ ] Create upload form: name, relationship (dropdown), bio (textarea)
+- [ ] Implement photo upload to Firebase Storage with preview before saving
+- [ ] Save person document to Firestore subcollection on submit
+- [ ] Display grid of uploaded people with name, photo thumbnail, and relationship
+- [ ] Add Edit and Delete actions to each person card
+- [ ] Display `difficultyScore` as a badge: Low / Medium / High (all start at 0.5)
+
+**End of sprint deliverable:**
+You can add family members with photos through the admin website.
+Open /dashboard/people and add yourself, other family members, anyone.
+This is the first piece of real content in the app.
+
+---
+
+### Sprint 5 — Admin: Photos + Songs
+**Goal:** Family photos and song clips can be uploaded and managed.
+This powers the "Photo Ordering" and "Finish the Song" game modules.
+
+**Tasks:**
+- [ ] Build /dashboard/photos page
+- [ ] Create photo upload form: image, caption, approximate year, tag people (multi-select from existing people)
+- [ ] Save photo documents to Firestore; store images in Firebase Storage
+- [ ] Display photo grid with caption and year overlaid on each thumbnail
+- [ ] Build /dashboard/songs page
+- [ ] Create song upload form: title, artist, MP3 file upload (max 10MB)
+- [ ] Add inline audio player so admin can preview the clip after upload
+- [ ] Add helper text: "Upload an 8-second clip. Use mp3cut.net to trim for free."
+- [ ] Save song documents to Firestore; store audio in Firebase Storage
+- [ ] Add Edit and Delete to both pages
+
+**End of sprint deliverable:**
+The admin website has three working content sections: People, Photos, Songs.
+Upload real content — actual family photos, actual song clips.
+This is the first time the app starts to feel personal.
+
+---
+
+### Sprint 6 — Admin: Stories
+**Goal:** Family members can write short personal vignettes with fill-in-the-blank gaps.
+This powers the "Her Story" game module — the most personal content in the app.
+
+**Tasks:**
+- [ ] Build /dashboard/stories page
+- [ ] Create story editor textarea with live {{blank}} syntax highlighting
+- [ ] Dynamically detect blanks as admin types and render inline answer/distractor fields
+- [ ] For each detected blank: "Correct answer" field + "Wrong option 1" + "Wrong option 2"
+- [ ] Add Preview button that shows the vignette exactly as the patient will see it
+- [ ] Save story document to Firestore on submit
+- [ ] Display list of existing stories with vignette preview and edit/delete
+
+**End of sprint deliverable:**
+The full admin website is complete. All four content types can be managed.
+Write 2–3 real stories about your mom. Use her real history.
+The admin side of The Memory Album is done.
+
+---
+
+### Sprint 7 — First Game Module: Finish the Song
+**Goal:** The first game module is playable end-to-end.
+This is the first time the patient experience exists.
+
+**Tasks:**
+- [ ] Build /play entry point — session loading screen ("Getting your session ready...")
+- [ ] Build basic session builder that checks content availability and selects modules
+- [ ] Install and configure Howler.js for audio playback
+- [ ] Implement iOS audio unlock on first user tap of the session
+- [ ] Build "Finish the Song" module screen:
+  - Fetch random song from Firestore
+  - Play 8-second clip via Howler.js on screen load
+  - Display 3 answer options (1 correct + 2 from other songs)
+  - Patient taps an answer
+  - Show warm reveal card regardless of correct/incorrect
+- [ ] Log result to Firestore session/results subcollection
+- [ ] Build placeholder "next module" and summary screens
+- [ ] Apply patient UI rules: large text, large tap targets, no error states
+
+**End of sprint deliverable:**
+Open /play, hear a song clip, tap an answer, see the reveal.
+It's a real game. It's playable. Test it yourself first, then show someone.
+
+---
+
+### Sprint 8 — Second Game Module: Who's This?
+**Goal:** Face recognition module is playable with spaced repetition logic working.
+
+**Tasks:**
+- [ ] Build "Who's This?" module screen:
+  - Fetch people weighted by difficultyScore (high score = appears more)
+  - Display one photo, large and centered
+  - Show 3 name buttons (1 correct + 2 distractors)
+  - Patient taps a name
+  - Show warm reveal card: photo + name + relationship + bio
+- [ ] Implement SM-2 spaced repetition:
+  - Correct: difficultyScore = max(0.0, score - 0.15)
+  - Incorrect: difficultyScore = min(1.0, score + 0.25)
+  - Write updated score back to Firestore after each answer
+- [ ] Log result to Firestore
+- [ ] Wire into session flow: Finish the Song → Who's This? (2–3 faces) → summary
+
+**End of sprint deliverable:**
+Two game modules work in sequence.
+Play a full mini-session: song → 2 faces → summary.
+The app is starting to feel like something real.
+
+---
+
+### Sprint 9 — Third + Fourth Modules: Her Story + Photo Ordering
+**Goal:** Two more modules complete. Four out of five games are playable.
+
+**Tasks:**
+- [ ] Build "Her Story" module:
+  - Fetch story vignette from Firestore
+  - Render text with blank gaps shown as underscores
+  - One blank at a time: show 3 multiple-choice options
+  - Blank fills in on tap; advance to next blank
+  - After all blanks: show full completed story with warm message
+  - Log one result per blank answered
+- [ ] Build "When Did This Happen?" module:
+  - Fetch 2 photos with different approximateYear values
+  - Display both photos stacked vertically with "This one came first" button under each
+  - Show reveal: both photos with captions and years
+  - Log result
+- [ ] Wire both into session flow in correct order
+- [ ] Build proper end-of-session summary screen:
+  - Warm congratulatory message
+  - Brief recap of what was played
+  - "I'm Done for Today" button (only way to exit)
+
+**End of sprint deliverable:**
+Four modules work in sequence. A nearly complete daily session is playable.
+Run through the full flow yourself. Have a family member try it.
+
+---
+
+### Sprint 10 — MVP ✅
+**Goal:** A complete, working daily session your mom can actually use.
+The session builder is fully logic-driven. Content checks work. This is the MVP.
+
+**Tasks:**
+- [ ] Finalize session builder logic:
+  - Check content availability for each module (min thresholds)
+  - Skip unavailable modules gracefully
+  - Enforce correct module order
+  - Check if session already completed today — show "You already played today!" if so
+  - Preload all photos and audio before first module screen
+- [ ] Implement "You already played today" screen with today's session summary
+- [ ] Final patient UI pass — go through every screen and enforce:
+  - 22px minimum body font, 32px headings
+  - 64×64px minimum touch targets
+  - No error states visible to patient
+  - Back navigation disabled during modules
+  - Portrait lock enforced
+- [ ] End-to-end test: upload content → complete full session → verify Firestore results logged
+- [ ] Upload real content for your mom: her family photos, songs she loves, her stories
+- [ ] Set up her device: navigate to TheMemoryAlbum.com/play, walk her through it
+
+---
+## ✅ MVP COMPLETE — End of Sprint 10
+**What works:**
+- Family admin can upload all content (people, photos, songs, stories)
+- Patient gets a personalized daily session with up to 4 game modules
+- Spaced repetition quietly learns which faces are hardest
+- Sessions are logged to Firestore
+- Deployed and live at TheMemoryAlbum.com
+
+**What doesn't exist yet:**
+Word Garden, offline support, push notifications, reports, native app.
+None of those are needed for your mom to start using this today.
+
+**At this point: share it. Use it. Collect real feedback.**
+---
+
+### Sprint 11 — Word Garden
+**Goal:** Fifth and final game module is complete. All 5 games are playable.
+
+**Tasks:**
+- [ ] Build "Word Garden" module:
+  - Show category prompt (rotated by day-of-year index)
+  - Implement growing vine visual timer (60 seconds, no countdown numbers)
+  - Implement Web Speech API microphone input — words appear as flowers on speak
+  - Implement fallback word chip tapping for unsupported browsers
+  - Garden blooms on completion
+  - Summary: "Your garden grew X flowers today!"
+  - Log word count to Firestore
+- [ ] Add Word Garden to session builder (always last)
+- [ ] Create `/lib/word-garden-categories.ts` with 25+ categories
+
+**End of sprint deliverable:**
+All 5 game modules are complete. The full intended daily experience exists.
+
+---
+
+### Sprint 12 — PWA: Installable + Offline
+**Goal:** The app installs to the home screen like a native app and works without internet.
+
+**Tasks:**
+- [ ] Create /public/manifest.json with correct app name, colors, icons
+- [ ] Create all required icon sizes: 192px, 512px, 512px maskable, 180px apple-touch-icon
+- [ ] Add iOS-specific meta tags to layout.tsx
+- [ ] Configure next-pwa Workbox cache strategies:
+  - App shell: Cache First
+  - Patient photos + audio: Cache First (50MB limit, pre-cached at session start)
+  - Session data: Network First
+  - Admin dashboard: Network Only
+- [ ] Build /install page with step-by-step instructions for adding to home screen (iOS and Android)
+- [ ] Test offline: airplane mode → play a full session → verify it works
+- [ ] Test home screen install on iPhone and Android
+
+**End of sprint deliverable:**
+The app installs to the home screen and works with no internet connection.
+Your mom can have an icon on her iPad just like any other app.
+
+---
+
+### Sprint 13 — Push Notifications
+**Goal:** A gentle morning reminder arrives on the patient's device every day automatically.
+
+**Tasks:**
+- [ ] Set up Firebase Cloud Messaging (FCM) in Firebase Console
+- [ ] Generate VAPID key; add to environment variables
+- [ ] Create /public/firebase-messaging-sw.js (required background notification handler)
+- [ ] Implement notification permission request on first /play visit
+- [ ] Implement FCM token registration; store token in patient Firestore document
+- [ ] Create Firebase Cloud Function: daily cron job (Cloud Scheduler)
+  - Runs at 9am in patient's local timezone
+  - Fetches all patients with a valid FCM token
+  - Sends: "Good morning! Your Memory Album session is ready. 🌸"
+  - Notification tap opens /play
+- [ ] Deploy Cloud Function
+- [ ] Test: verify notification arrives on iOS and Android
+
+**End of sprint deliverable:**
+Every morning, a gentle push notification arrives without anyone doing anything.
+The daily habit loop is complete.
+
+---
+
+### Sprint 14 — Reports
+**Goal:** Family admins can see how engagement and recognition are trending over time.
+
+**Tasks:**
+- [ ] Build /dashboard/reports page
+- [ ] Install Recharts
+- [ ] Build "Sessions this week" view: 7 day circles (filled = played, empty = missed)
+- [ ] Build "Module accuracy" line chart: one line per module, 4-week rolling window
+- [ ] Build "Face recognition difficulty" list:
+  - Sorted by difficultyScore descending
+  - Each person shows name, current score badge, and sparkline trend
+- [ ] Build "Last session" display with red flag badge if > 48 hours since last play
+- [ ] Build "Word Garden" trend: average word count per session over 4 weeks
+- [ ] Query all data from Firestore session/results subcollections
+
+**End of sprint deliverable:**
+Log into the admin website and see a clear picture of how your mom is doing.
+Which family members is she struggling with? Is she playing every day?
+The reports page answers those questions.
+
+---
+
+### Sprint 15 — Native App (Capacitor)
+**Goal:** The Memory Album is submitted to the Apple App Store and Google Play.
+
+**Tasks:**
+- [ ] Sign up for Apple Developer Program ($99/year) at developer.apple.com
+- [ ] Sign up for Google Play Developer account ($25 one-time) at play.google.com/console
+- [ ] Install Capacitor and plugins:
+  - @capacitor/core, @capacitor/cli
+  - @capacitor/ios, @capacitor/android
+  - @capacitor/push-notifications
+- [ ] Create capacitor.config.ts pointing to TheMemoryAlbum.com (live site in WebView)
+- [ ] Initialize iOS and Android projects: `npx cap add ios` + `npx cap add android`
+- [ ] Configure push notifications for native (APNs for iOS; FCM for Android)
+- [ ] Create App Store assets: app icon (1024px), screenshots (required sizes for iPhone + iPad)
+- [ ] iOS build: use EAS Build (cloud Mac service — Xcode cannot run on ChromeOS)
+- [ ] Android build: Android Studio in ChromeOS Linux (works natively)
+- [ ] Submit iOS app to App Store Connect
+- [ ] Submit Android app to Google Play Console
+- [ ] Wait for Apple review (typically 1–3 business days)
+
+**End of sprint deliverable:**
+The Memory Album is in the App Store.
+Anyone can download it. Your mom can find it by searching.
+
+---
+
+## After Sprint 15: Ongoing
+
+From here the work shifts from building to improving. Based on suggestions collected from your landing page and early users, you and Claude will:
+
+- Review the backlog together
+- Prioritize the next set of features
+- Plan the next set of sprints
+- Repeat
+
+Future candidates based on the Phase 2 spec:
+- Video clip messages from family
+- Voice bio recordings
+- Caregiver daily notes
+- Multi-patient support (more than one family member using the app)
+
+---
+
+## How We Work Together
+
+**Sprint cadence:**
+Each sprint is one week. At the start of each sprint, Claude (as Scrum Master) will confirm the goal, review any carryover from last sprint, and set the task list. At the end of each sprint, we do a brief retrospective — what got done, what didn't, and why.
+
+**You are the Product Manager.** You decide what matters and when. If you want to change priorities, change them — but tell Claude first so the plan can be updated.
+
+**Claude is the Scrum Master and Tech Lead.** Before each sprint begins, Claude will review scope and flag anything unrealistic. During the sprint, Claude guides every technical decision. If a sprint runs over, Claude will help you decide what to cut or carry forward — not just pile it on top of next sprint.
+
+**Never start a sprint cold.** Begin every coding session by telling Claude which sprint you're on and which specific task you're attempting. Paste the relevant section of the technical spec. Get the approach confirmed before writing code.
+
+**Never spin on a problem.** If you're stuck for more than 20 minutes on anything, stop and ask. Paste the error exactly as it appears. Describe what you tried. You will get unstuck faster this way than grinding alone.
+
+**Small commits, always.** Push to GitHub at the end of every working session even if the feature isn't finished. Never lose work.
+
+**Your mom's reaction is the sprint review.** When a feature involves the patient experience, test it with her. Her confusion is a bug. Her engagement is a green light.
+
+---
+
+*Project Plan v1.0 — Living document. Revisit and adjust every 3–4 sprints.*
+*Next review point: End of Sprint 4.*
